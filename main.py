@@ -2,14 +2,39 @@
 import vosk
 import pyaudio
 import json
+from llama_cpp import Llama
 
-# model_path = "model/vosk-model-small-en-us-0.15" # small model is less accurate (not really usable)
-model_path = "model/vosk-model-en-us-0.22"  # much more accurate
+# VOSK_MODEL_PATH = "model/vosk-model-small-en-us-0.15" # small model is less accurate (not really usable)
+VOSK_MODEL_PATH = "models/vosk-model-en-us-0.22"  # much more accurate
 
-model = vosk.Model(model_path)
+SYSTEM_PROMPT = """
+You are a helpful assistant connected to a speech-to-text system
+If the user is expressing a clear request, intent, or idea, respond with a concise summary (1 sentence max). Do not give input, feedback, or suggestions on anything. Do not add any content/information
+Do not make suggestions or add commentary, simply summarize the input text
+"""
 
-# freq=16000Hz
-rec = vosk.KaldiRecognizer(model, 16000)
+llm = Llama(
+    model_path="./models/llama3.2/Llama-3.2-1B-Instruct-f16.gguf",
+    # n_gpu_layers=-1, # Uncomment to use GPU acceleration
+    # n_ctx=2048, # Uncomment to increase the context window
+    verbose=False
+)
+
+
+def summarize_text(text):
+
+    output = llm.create_chat_completion(
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": text}
+        ],
+        temperature=0.1
+    )
+    return (output['choices'][0]['message']['content'])
+
+
+vosk_model = vosk.Model(VOSK_MODEL_PATH)
+rec = vosk.KaldiRecognizer(vosk_model, 16000)
 
 # open microphone stream
 p = pyaudio.PyAudio()
@@ -19,9 +44,15 @@ stream = p.open(format=pyaudio.paInt16,
                 input=True,
                 frames_per_buffer=8192)
 
+print("BEGIN")
+
+# main loop
 while True:
-    data = stream.read(4096)  # read in chunks of 4096 bytes
+    data = stream.read(4096, exception_on_overflow=False)
     if rec.AcceptWaveform(data):
         result = json.loads(rec.Result())
         recognized_text = result["text"]
-        print(recognized_text)
+        if recognized_text:
+            print("SPEECH", recognized_text)
+            summary = summarize_text(recognized_text)
+            print("SUMMARY", summary)
