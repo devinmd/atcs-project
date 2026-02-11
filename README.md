@@ -19,3 +19,8 @@ huggingface-cli download \
   --local-dir models/llama3.2
 ```
 
+## Usage
+Run `db.py` once to initialize the database
+```shell
+python db.py
+```

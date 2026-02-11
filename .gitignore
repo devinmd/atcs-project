@@ -12,4 +12,6 @@ wheels/
 # vosk model
 models
 
+data.db
+
 .DS_Store
