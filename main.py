@@ -3,7 +3,7 @@ import vosk
 import pyaudio
 import json
 from llama_cpp import Llama
-from store import insert_speech
+from store import create_session_id, insert_speech
 
 VOSK_MODEL_PATH = "models/vosk-model-en-us-0.22"
 
@@ -13,7 +13,10 @@ If the user is expressing a clear request, intent, or idea, respond with a conci
 If the user clearly and explicitly states a to-do item, extract and summarize that as a to-do item.
 Do not give input, feedback, or suggestions on anything. 
 Do not add any content/information.
-Do not make suggestions or add commentary, simply summarize the input text
+Do not make suggestions or add commentary, simply summarize the input text.
+If you are unsure what the user means, respond with "NO SUMMARY".
+If there is no content or not enough content to summarize, respond with "NO SUMMARY".
+Only give clear and concise summaries that you are confident about.
 """
 
 # initialize the LLM
@@ -52,21 +55,20 @@ stream = p.open(format=pyaudio.paInt16,
                 frames_per_buffer=8192)
 
 
+session_id = create_session_id()
+
 print("READY")
 
 
 # main app loop
 while True:
-    data = stream.read(4096, exception_on_overflow=False)
+    data = stream.read(1024, exception_on_overflow=False)
     if rec.AcceptWaveform(data):
         result = json.loads(rec.Result())
         recognized_text = result["text"]
         if recognized_text:
             # insert speech to db
-            insert_speech(
-                text=recognized_text
-            )
-
             print("SPEECH", recognized_text)
+            insert_speech(text=recognized_text, session_id=session_id)
             summary = summarize_text(recognized_text)
             print("SUMMARY", summary)

@@ -7,6 +7,7 @@ DB_PATH = Path("data.db")
 def get_connection():
     return sqlite3.connect(DB_PATH)
 
+
 # initialize the database and create tables
 def initialize_db():
     conn = get_connection()
@@ -15,7 +16,8 @@ def initialize_db():
         CREATE TABLE IF NOT EXISTS speech (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        session_id INTEGER
     )
     """)
     cursor.execute("""
@@ -23,7 +25,8 @@ def initialize_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         speech_ids TEXT,     -- comma separated transcript IDs
         text TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        session_id INTEGER
     )
     """)
     conn.commit()
