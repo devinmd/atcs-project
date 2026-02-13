@@ -3,7 +3,7 @@ import vosk
 import pyaudio
 import json
 from llama_cpp import Llama
-from store import create_session_id, insert_speech
+from store import create_session_id, insert_speech, insert_summary
 
 VOSK_MODEL_PATH = "models/vosk-model-en-us-0.22"
 
@@ -56,6 +56,7 @@ stream = p.open(format=pyaudio.paInt16,
 
 
 session_id = create_session_id()
+current_message = ""
 
 print("READY")
 
@@ -67,8 +68,14 @@ while True:
         result = json.loads(rec.Result())
         recognized_text = result["text"]
         if recognized_text:
-            # insert speech to db
-            print("SPEECH", recognized_text)
-            insert_speech(text=recognized_text, session_id=session_id)
-            summary = summarize_text(recognized_text)
-            print("SUMMARY", summary)
+          # append recognized text to current message
+            current_message += " " + recognized_text
+            print("DETECTED SPEECH:", recognized_text)
+            # if message length exceeds threshold, summarize and store
+        if len(current_message) > 100:
+            print("FULL MESSAGE TO SUMMARIZE:", current_message)
+            insert_speech(text=current_message, session_id=session_id)
+            summary = summarize_text(current_message)
+            print("SUMMARY:", summary)
+            insert_summary(text=summary, session_id=session_id)
+            current_message = ""

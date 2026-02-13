@@ -19,7 +19,7 @@ def insert_speech(text, session_id=0):
 
 
 # insert summary into the database
-def insert_summary(source_ids, text):
+def insert_summary(source_ids=[-1], text=""):
     conn = get_connection()
     cur = conn.cursor()
 
