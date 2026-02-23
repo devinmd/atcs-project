@@ -12,11 +12,10 @@ You are a helpful assistant connected to a speech-to-text system whose only job 
 If the user is expressing a clear request, intent, or idea, respond with a concise summary (1 sentence max). 
 If the user clearly and explicitly states a to-do item, extract and summarize that as a to-do item.
 Do not give input, feedback, or suggestions on anything. 
-Do not add any content/information.
-Do not make suggestions or add commentary, simply summarize the input text.
-If you are unsure what the user means, respond with "NO SUMMARY".
-If there is no content or not enough content to summarize, respond with "NO SUMMARY".
+Do not add any content/information and never respond directly to the user.
 Only give clear and concise summaries that you are confident about.
+Do not make suggestions or add commentary, simply summarize the input text.
+If you are unsure what is being said or there is not sufficient content to summarize, respond with "NO SUMMARY"
 """
 
 # initialize the LLM
@@ -72,10 +71,10 @@ while True:
             current_message += " " + recognized_text
             print("DETECTED SPEECH:", recognized_text)
             # if message length exceeds threshold, summarize and store
-        if len(current_message) > 100:
-            print("FULL MESSAGE TO SUMMARIZE:", current_message)
-            insert_speech(text=current_message, session_id=session_id)
-            summary = summarize_text(current_message)
-            print("SUMMARY:", summary)
-            insert_summary(text=summary, session_id=session_id)
-            current_message = ""
+    if len(current_message) > 20:
+        print("FULL MESSAGE TO SUMMARIZE:", current_message)
+        insert_speech(text=current_message, session_id=session_id)
+        summary = summarize_text(current_message)
+        print("SUMMARY:", summary)
+        insert_summary(text=summary, session_id=session_id)
+        current_message = ""

@@ -19,16 +19,17 @@ def insert_speech(text, session_id=0):
 
 
 # insert summary into the database
-def insert_summary(source_ids=[-1], text=""):
+def insert_summary(speech_ids=[-1], text="", session_id=-1):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO summary ( source_ids, text)
-    VALUES (?, ?)
+    INSERT INTO summary (speech_ids, text, session_id)
+    VALUES (?, ?, ?)
     """, (
-        ",".join(map(str, source_ids)),
-        text
+        ",".join(map(str, speech_ids)),
+        text,
+        session_id
     ))
 
     conn.commit()
@@ -57,8 +58,8 @@ def create_session_id():
     cur = conn.cursor()
 
     cur.execute("""
-    SELECT id, text FROM speech
-    ORDER BY id ASC
+    SELECT id, text, timestamp, session_id FROM speech
+    ORDER BY id DESC
     LIMIT ?
     """, (1,))
 

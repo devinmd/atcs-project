@@ -1,6 +1,8 @@
 # AT CS Project
 
-## Installation Instructions
+An app that transcribes the user's microphone input and then summarizes the content
+
+## Installation instructions
 
 ### Install Python 3.12
 MacOS
@@ -23,4 +25,8 @@ huggingface-cli download \
 Run `db.py` once to initialize the database
 ```shell
 python db.py
+```
+Run `main.py` to run the app
+```shell
+python main.py
 ```
