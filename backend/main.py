@@ -18,6 +18,8 @@ Do not make suggestions or add commentary, simply summarize the input text.
 If you are unsure what is being said or there is not sufficient content to summarize, respond with "NO SUMMARY"
 """
 
+CHUNK_SIZE = 20
+
 # initialize the LLM
 llm = Llama(
     model_path="./models/llama3.2/Llama-3.2-1B-Instruct-f16.gguf",
@@ -67,11 +69,11 @@ while True:
         result = json.loads(rec.Result())
         recognized_text = result["text"]
         if recognized_text:
-          # append recognized text to current message
+            # append recognized text to current message
             current_message += " " + recognized_text
             print("DETECTED SPEECH:", recognized_text)
-            # if message length exceeds threshold, summarize and store
-    if len(current_message) > 20:
+    if len(current_message) > CHUNK_SIZE:
+        # if message length exceeds threshold, summarize and store
         print("FULL MESSAGE TO SUMMARIZE:", current_message)
         insert_speech(text=current_message, session_id=session_id)
         summary = summarize_text(current_message)

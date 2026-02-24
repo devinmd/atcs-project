@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path("data.db")
+DB_PATH = Path("./data.db")
 
 
 def get_connection():

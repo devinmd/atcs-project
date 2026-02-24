@@ -1,0 +1,24 @@
+#root {
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 4rem;
+}
+
+.content .summaries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.content .summaries .summary-card {
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--bg-l1);
+  border-radius: 0.5rem;
+  padding: 0 1rem;
+}

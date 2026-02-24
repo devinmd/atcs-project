@@ -1,3 +1,7 @@
+# app files
+models
+data.db
+
 # Python-generated files
 __pycache__/
 *.py[oc]
@@ -9,9 +13,28 @@ wheels/
 # Virtual environments
 .venv
 
-# vosk model
-models
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-data.db
+#
+node_modules
+dist
+dist-ssr
+*.local
 
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
