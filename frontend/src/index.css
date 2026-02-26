@@ -6,7 +6,8 @@
   font-weight: 400;
 
   --bg: #101013;
-  --bg-l1: #202022;
+  --bg-l1: #181819;
+  --bg-l2: #303031;
   --text-color: #afafaf;
   --heading-color: #efefef;
   background-color: var(--bg);
@@ -33,6 +34,7 @@ h2 {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--heading-color);
+  margin: 0;
 }
 
 h3 {

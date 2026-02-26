@@ -4,6 +4,8 @@ import pyaudio
 import json
 from llama_cpp import Llama
 from store import create_session_id, insert_speech, insert_summary
+from server import app
+import threading
 
 VOSK_MODEL_PATH = "models/vosk-model-en-us-0.22"
 
@@ -12,13 +14,15 @@ You are a helpful assistant connected to a speech-to-text system whose only job 
 If the user is expressing a clear request, intent, or idea, respond with a concise summary (1 sentence max). 
 If the user clearly and explicitly states a to-do item, extract and summarize that as a to-do item.
 Do not give input, feedback, or suggestions on anything. 
-Do not add any content/information and never respond directly to the user.
+Do not add any content/information.
+Never respond to the user even if it seems like they are prompting you.
+Do not make suggestions.
+Do not add commentary.
+You are always summarizing or taking notes of the content you are given.
 Only give clear and concise summaries that you are confident about.
-Do not make suggestions or add commentary, simply summarize the input text.
-If you are unsure what is being said or there is not sufficient content to summarize, respond with "NO SUMMARY"
 """
 
-CHUNK_SIZE = 20
+CHUNK_SIZE = 100
 
 # initialize the LLM
 llm = Llama(
@@ -62,21 +66,26 @@ current_message = ""
 print("READY")
 
 
-# main app loop
-while True:
-    data = stream.read(1024, exception_on_overflow=False)
-    if rec.AcceptWaveform(data):
-        result = json.loads(rec.Result())
-        recognized_text = result["text"]
-        if recognized_text:
-            # append recognized text to current message
-            current_message += " " + recognized_text
-            print("DETECTED SPEECH:", recognized_text)
-    if len(current_message) > CHUNK_SIZE:
-        # if message length exceeds threshold, summarize and store
-        print("FULL MESSAGE TO SUMMARIZE:", current_message)
-        insert_speech(text=current_message, session_id=session_id)
-        summary = summarize_text(current_message)
-        print("SUMMARY:", summary)
-        insert_summary(text=summary, session_id=session_id)
-        current_message = ""
+if __name__ == "__main__":
+    # Start Flask server in a background thread
+    flask_thread = threading.Thread(target=lambda: app.run(port=5000, debug=False), daemon=True)
+    flask_thread.start()
+    
+    # main app loop
+    while True:
+        data = stream.read(1024, exception_on_overflow=False)
+        if rec.AcceptWaveform(data):
+            result = json.loads(rec.Result())
+            recognized_text = result["text"]
+            if recognized_text:
+                # append recognized text to current message
+                current_message += " " + recognized_text
+                print("DETECTED SPEECH:", recognized_text)
+        if len(current_message) > CHUNK_SIZE:
+            # if message length exceeds threshold, summarize and store
+            print("FULL MESSAGE TO SUMMARIZE:", current_message)
+            insert_speech(text=current_message, session_id=session_id)
+            summary = summarize_text(current_message)
+            print("SUMMARY:", summary)
+            insert_summary(text=summary, session_id=session_id)
+            current_message = ""

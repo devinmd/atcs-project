@@ -29,11 +29,8 @@ huggingface-cli download \
 
 ## Usage
 
-1. Run `db.py` once to initialize the database
+1. Run `db.py` in `/backend` once to initialize the database
 
-2. Run `server.py` to host the webserver
+2. Run `main.py` in `/backend` to run the app
 
-3. Run `main.py` to run the app
-
-4. Run `npm run dev -- --host` in `/frontend` to run the webapp
-   - Ensure you access the app with `127.0.0.1`, not `localhost`
+3. Run `npm run dev -- --host` in `/frontend` to run the webapp

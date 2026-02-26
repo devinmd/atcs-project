@@ -1,24 +1,34 @@
 #root {
+  
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  padding: 4rem;
+  gap: 4rem;
+  padding: 8rem;
 }
 
-.content .summaries {
+.content .split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+}
+
+.content .split .col {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.content .summaries .summary-card {
-  height: 2rem;
+.content .split .col .card {
+  min-height: 3rem;
   display: flex;
   align-items: center;
-  border: 1px solid var(--bg-l1);
+  border: 1px solid var(--bg-l2);
   border-radius: 0.5rem;
-  padding: 0 1rem;
+  background-color: var(--bg-l1);
+  box-sizing: border-box;
+  padding: 0.5rem 1rem;
+  line-height: 1.5;
 }

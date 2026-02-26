@@ -32,6 +32,3 @@ def get_summaries():
 def home():
     return "hello world"
 
-
-if __name__ == "__main__":
-    app.run(port=5000, debug=True)
