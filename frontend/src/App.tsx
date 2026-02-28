@@ -5,67 +5,61 @@ import './App.css'
 
 function App() {
 
-  const [speech, setSpeech] = useState<any[]>([])
+  const [speech, setSpeech] = useState<any[]>([{ text: "hello world", timestamp: "2026" }])
   const [summaries, setSummaries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const fetchResource = async (path: string, setter: (data: any[]) => void) => {
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/${path}`)
+      if (!res.ok) {
+        throw new Error("Failed to fetch")
+      }
+      const data = await res.json()
+      console.log(data)
+      setter(data)
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/speech")
-      .then(res => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch")
-        }
-        return res.json()
-      })
-      .then(data => {
-        setSpeech(data)
-        setLoading(false)
-      })
-      .catch(err => {
-        setError(err.message)
-        setLoading(false)
-      })
-    fetch("http://127.0.0.1:5000/summaries")
-      .then(res => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch")
-        }
-        return res.json()
-      })
-      .then(data => {
-        setSummaries(data)
-        setLoading(false)
-      })
-      .catch(err => {
-        setError(err.message)
-        setLoading(false)
-      })
+    const load = async () => {
+      setLoading(true)
+      await Promise.all([
+        fetchResource("speech", setSpeech),
+        fetchResource("summaries", setSummaries),
+      ])
+      setLoading(false)
+    }
+    load()
   }, [])
 
   return (
     <div className="content">
       <h1>Hello</h1>
       {loading && <h2>Loading</h2>}
-      {error && <h2>Error</h2>}
+      {error && <h2 style={{ color: "red" }}>Error</h2>}
 
       <div className='split'>
-        <div className='col' >
+        <div className='col card'  >
           <h2>Speech</h2>
           <div></div>
-          {speech.map((item, index) => (
+          {speech.slice().reverse().map((item, index) => (
             <div key={index} className="card">
-              {item.text}
+              <span>{item.timestamp}</span>
+              <span>{item.text}</span>
             </div>
           ))}
         </div>
-        <div className='col' >
+        <div className='col card' >
           <h2>Summary</h2>
           <div></div>
-          {summaries.map((item, index) => (
+          {summaries.slice().reverse().map((item, index) => (
             <div key={index} className="card">
-              {item.text}
+              <span>{item.timestamp}</span>
+              <span>{item.text}</span>
             </div>
           ))}
         </div>

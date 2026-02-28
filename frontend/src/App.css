@@ -1,5 +1,4 @@
 #root {
-  
 }
 
 .content {
@@ -21,10 +20,11 @@
   gap: 0.5rem;
 }
 
-.content .split .col .card {
-  min-height: 3rem;
+.card {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0;
+  min-height: 3rem;
   border: 1px solid var(--bg-l2);
   border-radius: 0.5rem;
   background-color: var(--bg-l1);
