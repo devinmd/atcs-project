@@ -10,11 +10,13 @@ from server import app
 
 # whisper settings
 MODEL_SIZE = "base"  # tiny, base, small, medium, large-v3
+COMPUTE_TYPE = "float32"  # int8, int16, float16, float32
 SAMPLE_RATE = 16000
-CHUNK_DURATION = 5  # seconds
+CHUNK_DURATION = 10  # seconds
+BEAM_SIZE = 10  # 1=fastest, 10=best accuracy
 
 # load whisper model
-model = WhisperModel(MODEL_SIZE, compute_type="float32")
+model = WhisperModel(MODEL_SIZE, compute_type=COMPUTE_TYPE)
 print("whisper model loaded")
 
 LLAMA_SYSTEM_PROMPT = """
@@ -31,8 +33,8 @@ MESSAGE_CHUNK_SIZE = 50
 llm = Llama(
     model_path="./models/llama3.2/Llama-3.2-8B-Instruct.IQ4_XS.gguf",  # takes ~10 seconds
     # model_path="./models/llama3.2/Llama-3.2-1B-Instruct-f16.gguf", # takes a few seconds to generate answer
-    # n_gpu_layers=-1, # Uncomment to use GPU acceleration
-    # n_ctx=2048, # Uncomment to increase the context window
+    n_gpu_layers=-1,
+    n_ctx=1024,
     verbose=False
 )
 
@@ -41,7 +43,7 @@ llm = Llama(
 
 def summarize_text(text):
 
-    print("summarizing...")
+    print("SUMMARIZING...")
 
     output = llm.create_chat_completion(
         messages=[
@@ -58,6 +60,7 @@ audio_queue = queue.Queue()
 
 
 def audio_callback(indata, frames, time, status):
+    # runs after every sample is collected and puts it into a queue
     if status:
         print(status, file=sys.stderr)
     audio_queue.put(indata.copy())
@@ -80,10 +83,12 @@ if __name__ == "__main__":
         callback=audio_callback,
         dtype="float32"
     ):
-        print("LISTENING")
 
         try:
             while True:
+
+                print("LISTENING...")
+
                 audio_data = []
 
                 # collect audio for CHUNK_DURATION seconds
@@ -92,6 +97,7 @@ if __name__ == "__main__":
                 target_samples = SAMPLE_RATE * CHUNK_DURATION
 
                 while samples_collected < target_samples:
+                    # collects audio samples super quickly until we have enough for the chunk duration
                     chunk = audio_queue.get()
                     audio_data.append(chunk)
                     samples_collected += len(chunk)
@@ -99,13 +105,14 @@ if __name__ == "__main__":
                 # concatenate audio chunks
                 audio_np = np.concatenate(audio_data, axis=0).flatten()
                 # transcribe with whisper
-                segments, info = model.transcribe(audio_np, beam_size=5)
+                segments, info = model.transcribe(
+                    audio_np, beam_size=BEAM_SIZE, language="en",)
 
                 for segment in segments:
                     text = segment.text.strip()
                     if text:
                         current_message += " " + text
-                        print("Detected:", text)
+                        print("DETECTED:", text)
 
                 if len(current_message) > MESSAGE_CHUNK_SIZE:
                     # if message length exceeds threshold, summarize and store
