@@ -18,7 +18,7 @@ model = WhisperModel(MODEL_SIZE, compute_type="float32")
 print("whisper model loaded")
 
 LLAMA_SYSTEM_PROMPT = """
-You are a helpful assistant connected to a speech-to-text system whose only job is to remember, summarize, and extract to-do items from user speech, nothing else.
+You are a helpful assistant connected to a speech-to-text system. Your only job is to act as a brain and notetaker, remember, summarize, and extract to-do items from user speech, nothing else.
 If the user is expressing a clear request, intent, or idea, respond with a concise summary (1 sentence max).
 If the user clearly and explicitly states a to-do item, extract and summarize that as a to-do item.
 Only use data & information from the users prompt.
@@ -29,7 +29,8 @@ MESSAGE_CHUNK_SIZE = 50
 
 # initialize the LLM
 llm = Llama(
-    model_path="./models/llama3.2/Llama-3.2-8B-Instruct.f16.gguf",
+    model_path="./models/llama3.2/Llama-3.2-8B-Instruct.IQ4_XS.gguf",  # takes ~10 seconds
+    # model_path="./models/llama3.2/Llama-3.2-1B-Instruct-f16.gguf", # takes a few seconds to generate answer
     # n_gpu_layers=-1, # Uncomment to use GPU acceleration
     # n_ctx=2048, # Uncomment to increase the context window
     verbose=False
@@ -39,6 +40,8 @@ llm = Llama(
 
 
 def summarize_text(text):
+
+    print("summarizing...")
 
     output = llm.create_chat_completion(
         messages=[
