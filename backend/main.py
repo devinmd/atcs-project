@@ -11,7 +11,7 @@ from server import app
 # whisper settings
 MODEL_SIZE = "base"  # tiny, base, small, medium, large-v3
 SAMPLE_RATE = 16000
-CHUNK_DURATION = 10  # seconds
+CHUNK_DURATION = 5  # seconds
 
 # load whisper model
 model = WhisperModel(MODEL_SIZE, compute_type="float32")
@@ -84,10 +84,18 @@ if __name__ == "__main__":
                 audio_data = []
 
                 # collect audio for CHUNK_DURATION seconds
-                for _ in range(int(SAMPLE_RATE / 1024 * CHUNK_DURATION)):
-                    audio_data.append(audio_queue.get())
+                audio_data = []
+                samples_collected = 0
+                target_samples = SAMPLE_RATE * CHUNK_DURATION
 
+                while samples_collected < target_samples:
+                    chunk = audio_queue.get()
+                    audio_data.append(chunk)
+                    samples_collected += len(chunk)
+
+                # concatenate audio chunks
                 audio_np = np.concatenate(audio_data, axis=0).flatten()
+                # transcribe with whisper
                 segments, info = model.transcribe(audio_np, beam_size=5)
 
                 for segment in segments:
