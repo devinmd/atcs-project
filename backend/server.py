@@ -1,9 +1,14 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
 import sqlite3
+import socketio
+import eventlet
+import eventlet.wsgi
 
-app = Flask(__name__)
-CORS(app)
+PORT = 5500
+
+# create a socketio server
+sio = socketio.Server(cors_allowed_origins='*')
+# wrap with a wsgi app
+app = socketio.WSGIApp(sio)
 
 DB_FILE = "data.db"
 
@@ -18,17 +23,17 @@ def query_db(query):
     return [dict(row) for row in rows]
 
 
-@app.route("/speech", methods=["GET"])
-def get_speech():
-    return jsonify(query_db("SELECT * FROM speech"))
+@sio.event
+def connect(sid, environ):
+    print('CONNECTED:', sid)
 
 
-@app.route("/summaries", methods=["GET"])
-def get_summaries():
-    return jsonify(query_db("SELECT * FROM summary"))
+@sio.event
+def get_all_speech(sid):
+    print("client request all speech data:", sid)
+    data = query_db("SELECT * FROM speech")
+    sio.emit("all_speech_data", data, to=sid)
 
 
-@app.route("/")
-def home():
-    return "hello world"
-
+def start_socket_server():
+    eventlet.wsgi.server(eventlet.listen(('', PORT)), app)

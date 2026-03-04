@@ -6,7 +6,8 @@ import numpy as np
 import queue
 import sys
 from store import create_session_id, insert_speech, insert_summary
-from server import app
+from server import start_socket_server
+
 
 # whisper settings
 MODEL_SIZE = "base"  # tiny, base, small, medium, large-v3
@@ -55,7 +56,6 @@ def summarize_text(text):
     return (output['choices'][0]['message']['content'])
 
 
-# open microphone stream
 audio_queue = queue.Queue()
 
 
@@ -73,9 +73,12 @@ print("INITIALIZED")
 
 if __name__ == "__main__":
     # start flask server in a background thread
-    flask_thread = threading.Thread(
-        target=lambda: app.run(port=5000, debug=False), daemon=True)
-    flask_thread.start()
+    socket_thread = threading.Thread(
+        target=start_socket_server,
+        daemon=True
+    )
+
+    socket_thread.start()
 
     with sd.InputStream(
         samplerate=SAMPLE_RATE,
@@ -106,13 +109,14 @@ if __name__ == "__main__":
                 audio_np = np.concatenate(audio_data, axis=0).flatten()
                 # transcribe with whisper
                 segments, info = model.transcribe(
-                    audio_np, beam_size=BEAM_SIZE, language="en",)
+                    audio_np, beam_size=BEAM_SIZE, language="en", condition_on_previous_text=True)
 
                 for segment in segments:
                     text = segment.text.strip()
                     if text:
                         current_message += " " + text
                         print("DETECTED:", text)
+                        current_message = current_message.strip()
 
                 if len(current_message) > MESSAGE_CHUNK_SIZE:
                     # if message length exceeds threshold, summarize and store

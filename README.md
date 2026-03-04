@@ -14,7 +14,7 @@ brew install python@3.12
 
 ### Install Hugging Face (to download models)
 
-### Install Llama model(s)
+### Install Llama model(s) in `/backend`
 
 Llama 3.2 1-Billion Instruct (~17 GB for all, ~2.5 GB for the f16 gguf)
 
@@ -28,10 +28,18 @@ Llama 3.2 8-Billion Instruct (~76 GB for all, ~16 GB for the f16 gguf)
 hf download mradermacher/Llama-3.2-8B-Instruct-GGUF --include "*.gguf" --local-dir models/llama3.2
 ```
 
+### Install node modules in `/frontend`
+
+Ensure Node.js is installed
+
+```shell
+npm i
+```
+
 ## Usage
 
 1. Run `db.py` in `/backend` once to initialize the database
 
 2. Run `main.py` in `/backend` to run the app
 
-3. Run `npm run dev -- --host` in `/frontend` to run the web interface
+3. Run `npm run dev` in `/frontend` to run the web interface
