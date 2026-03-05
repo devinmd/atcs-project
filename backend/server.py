@@ -35,5 +35,27 @@ def get_all_speech(sid):
     sio.emit("all_speech_data", data, to=sid)
 
 
+@sio.event
+def get_all_summaries(sid):
+    print("client request all summary data:", sid)
+    data = query_db("SELECT * FROM summary")
+    sio.emit("all_summaries", data, to=sid)
+
+
+def send_all_speech_data():
+    data = query_db("SELECT * FROM speech")
+    sio.emit("all_speech_data", data)
+
+
+def send_all_summary_data():
+    data = query_db("SELECT * FROM summary")
+    sio.emit("all_summaries", data)
+
+
+def send_status(status):
+    print("sending status")
+    sio.emit("app_status", {"app_status": status})
+
+
 def start_socket_server():
     eventlet.wsgi.server(eventlet.listen(('', PORT)), app)

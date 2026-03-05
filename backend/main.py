@@ -1,3 +1,4 @@
+import json
 from llama_cpp import Llama
 import threading
 from faster_whisper import WhisperModel
@@ -6,7 +7,7 @@ import numpy as np
 import queue
 import sys
 from store import create_session_id, insert_speech, insert_summary
-from server import start_socket_server
+from server import send_status, start_socket_server, send_all_speech_data, send_all_summary_data
 
 
 # whisper settings
@@ -26,6 +27,7 @@ If the user is expressing a clear request, intent, or idea, respond with a conci
 If the user clearly and explicitly states a to-do item, extract and summarize that as a to-do item.
 Only use data & information from the users prompt.
 You are always summarizing or taking notes of the content you are given.
+Only ever respond with JSON formatted as follows: {"type": "summary" | "todo" | "other" | "remember"| "note", "text": "concise summary of the users speech here"}
 """
 
 MESSAGE_CHUNK_SIZE = 50
@@ -90,6 +92,8 @@ if __name__ == "__main__":
         try:
             while True:
 
+                send_status("listening")
+
                 print("LISTENING...")
 
                 audio_data = []
@@ -105,11 +109,14 @@ if __name__ == "__main__":
                     audio_data.append(chunk)
                     samples_collected += len(chunk)
 
+                print("DONE LISTENING")
+                print("TRANSCRIBING...")
                 # concatenate audio chunks
                 audio_np = np.concatenate(audio_data, axis=0).flatten()
                 # transcribe with whisper
                 segments, info = model.transcribe(
                     audio_np, beam_size=BEAM_SIZE, language="en", condition_on_previous_text=True)
+                print("DONE TRANSCRIBING...")
 
                 for segment in segments:
                     text = segment.text.strip()
@@ -118,14 +125,32 @@ if __name__ == "__main__":
                         print("DETECTED:", text)
                         current_message = current_message.strip()
 
+                send_all_speech_data()
+
                 if len(current_message) > MESSAGE_CHUNK_SIZE:
                     # if message length exceeds threshold, summarize and store
+
+                    send_status("processing")
+
                     print("FULL MESSAGE TO SUMMARIZE:", current_message)
                     insert_speech(text=current_message, session_id=session_id)
-                    summary = summarize_text(current_message)
-                    print("SUMMARY:", summary)
-                    insert_summary(text=summary, session_id=session_id)
+
+                    summaryString = summarize_text(current_message).strip()
+
+                    try:
+                        summaryJSON = json.loads(summaryString)
+                    except json.JSONDecodeError:
+                        print("Failed to parse JSON:", summaryString)
+                        summaryJSON = {"type": "other",
+                                       "text": summaryString}
+
+                    print("SUMMARY:", summaryJSON)
+
+                    insert_summary(type=summaryJSON["type"],
+                                   text=summaryJSON["text"], session_id=session_id)
                     current_message = ""
+                    send_all_summary_data()
+                    send_status("done processing")
 
         except KeyboardInterrupt:
             print("\nStopped")

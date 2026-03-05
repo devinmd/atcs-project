@@ -17,16 +17,17 @@ def insert_speech(text, session_id=0):
 
 
 # insert summary into the database
-def insert_summary(speech_ids=[-1], text="", session_id=-1):
+def insert_summary(speech_ids=[-1], text="", type="", session_id=-1):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO summary (speech_ids, text, session_id)
-    VALUES (?, ?, ?)
+    INSERT INTO summary (speech_ids, text, type, session_id)
+    VALUES (?, ?, ?, ?)
     """, (
         ",".join(map(str, speech_ids)),
         text,
+        type,
         session_id
     ))
 

@@ -24,6 +24,7 @@ def initialize_db():
     CREATE TABLE IF NOT EXISTS summary (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         speech_ids TEXT,     -- comma separated transcript IDs
+        type TEXT NOT NULL,
         text TEXT NOT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         session_id INTEGER
