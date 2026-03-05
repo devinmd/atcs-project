@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import './App.css'
 
-import { io } from "socket.io-client";
+import { socket } from './socket';
+
 
 interface speechData {
   timestamp: string;
@@ -19,8 +20,6 @@ interface summaryData {
   session_id: number;
 }
 
-let socket = io("http://localhost:5500",
-  { transports: ['websocket'] });
 function App() {
 
   const [connected, setConnected] = useState(false);
@@ -28,24 +27,48 @@ function App() {
   const [speech, setSpeech] = useState<speechData[]>([]);
   const [summaries, setSummaries] = useState<summaryData[]>([]);
 
-  socket.on("connect", () => {
-    console.log("connected to websocket");
-    setConnected(true);
-    socket.emit("get_all_speech");
-    socket.emit("get_all_summaries");
-  });
+  useEffect(() => {
+    function onConnect() {
+      setConnected(true);
+      socket.emit("get_all_speech");
+      socket.emit("get_all_summaries");
+    }
 
-  socket.on("all_speech_data", (data) => {
-    setSpeech(data);
-  });
-  socket.on("all_summaries", (data) => {
-    setSummaries(data);
-  });
+    function onDisconnect() {
+      setConnected(false);
+    }
 
-  socket.on("app_status", (data) => {
-    console.log(data);
-    setStatus(data.app_status);
-  });
+    function onStatusChange(data: string) {
+      console.log(data)
+      setStatus(data);
+    }
+
+    function onAllSpeechData(data: speechData[]) {
+      console.log(data)
+      setSpeech(data);
+    }
+
+    function onAllSummaryData(data: summaryData[]) {
+      console.log(data)
+      setSummaries(data);
+    }
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+    socket.on('app_status', onStatusChange);
+    socket.on('all_speech', onAllSpeechData);
+    socket.on('all_summaries', onAllSummaryData);
+
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('app_status', onStatusChange);
+      socket.off('all_speech', onAllSpeechData);
+      socket.off('all_summaries', onAllSummaryData);
+
+    };
+  }, []);
 
   return (
     <>

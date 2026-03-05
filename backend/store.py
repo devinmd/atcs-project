@@ -1,6 +1,8 @@
 from db import get_connection
 
 # insert speech into the database
+
+
 def insert_speech(text, session_id=0):
     conn = get_connection()
     cur = conn.cursor()
@@ -52,7 +54,7 @@ def get_speech(limit=10):
     return rows
 
 
-# 
+#
 def create_session_id():
     conn = get_connection()
     cur = conn.cursor()

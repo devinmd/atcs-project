@@ -7,7 +7,7 @@ import numpy as np
 import queue
 import sys
 from store import create_session_id, insert_speech, insert_summary
-from server import send_status, start_socket_server, send_all_speech_data, send_all_summary_data
+from server import start_socket_server
 
 
 # whisper settings
@@ -68,18 +68,22 @@ def audio_callback(indata, frames, time, status):
     audio_queue.put(indata.copy())
 
 
+def send_status(status):
+    print(status)
+
+
 session_id = create_session_id()
 current_message = ""
 
 print("INITIALIZED")
 
 if __name__ == "__main__":
-    # start flask server in a background thread
+
+    # start socketio in a background thread
     socket_thread = threading.Thread(
         target=start_socket_server,
         daemon=True
     )
-
     socket_thread.start()
 
     with sd.InputStream(
@@ -125,8 +129,6 @@ if __name__ == "__main__":
                         print("DETECTED:", text)
                         current_message = current_message.strip()
 
-                send_all_speech_data()
-
                 if len(current_message) > MESSAGE_CHUNK_SIZE:
                     # if message length exceeds threshold, summarize and store
 
@@ -149,7 +151,6 @@ if __name__ == "__main__":
                     insert_summary(type=summaryJSON["type"],
                                    text=summaryJSON["text"], session_id=session_id)
                     current_message = ""
-                    send_all_summary_data()
                     send_status("done processing")
 
         except KeyboardInterrupt:
