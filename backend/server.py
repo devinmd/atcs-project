@@ -2,14 +2,13 @@ import sqlite3
 import socketio
 import eventlet
 import eventlet.wsgi
-import queue
 
 
 DB_FILE = "data.db"
 PORT = 5500
 
 # create a socketio server
-sio = socketio.Server(cors_allowed_origins='*')
+sio = socketio.Server(cors_allowed_origins="*")
 
 # wrap with a wsgi app
 app = socketio.WSGIApp(sio)
@@ -28,6 +27,7 @@ def query_db(query):
 @sio.event
 def connect(sid, environ):
     print('CONNECTED:', sid)
+    sio.emit('my message', {'foo': 'bar'})
 
 
 # send sall speech data to client

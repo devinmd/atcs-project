@@ -23,7 +23,7 @@ interface summaryData {
 function App() {
 
   const [connected, setConnected] = useState(false);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("Not connected");
   const [speech, setSpeech] = useState<speechData[]>([]);
   const [summaries, setSummaries] = useState<summaryData[]>([]);
 
@@ -39,19 +39,20 @@ function App() {
     }
 
     function onStatusChange(data: string) {
-      console.log(data)
       setStatus(data);
     }
 
     function onAllSpeechData(data: speechData[]) {
-      console.log(data)
       setSpeech(data);
     }
 
     function onAllSummaryData(data: summaryData[]) {
-      console.log(data)
       setSummaries(data);
     }
+
+    socket.onAny((event, ...args) => {
+      console.log("socket event:", event, args);
+    });
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
@@ -59,44 +60,50 @@ function App() {
     socket.on('all_speech', onAllSpeechData);
     socket.on('all_summaries', onAllSummaryData);
 
-
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('app_status', onStatusChange);
       socket.off('all_speech', onAllSpeechData);
       socket.off('all_summaries', onAllSummaryData);
-
     };
   }, []);
 
   return (
     <>
       <div className="content">
-        <h1>{connected ? "Connected" : "Not connected"}</h1>
-        <h1>{status}</h1>
 
-        <div className='split'>
+        <div className='card'>
+          <h2>Status</h2>
+          <span className={connected ? "connected" : "not-connected"}>{connected ? "Connected" : "Not connected"}</span>
+          <span className={status.toLowerCase().replaceAll(" ", "-")}>{status}</span>
+        </div>
 
-          <div className='col card'  >
+        <div className="split">
+
+          <div className='card'  >
             <h2>Speech</h2>
-            {speech.slice().reverse().map((item, index) => (
-              <div key={index} className="card">
-                <span>{item.timestamp}</span>
-                <span>{item.text}</span>
-              </div>
-            ))}
+            <div className="col">
+              {speech.slice().reverse().map((item, index) => (
+                <div key={index} className="card">
+                  <span>{item.timestamp}</span>
+                  <span>{item.text}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className='col card' >
+          <div className='card' >
             <h2>Summary</h2>
-            {summaries.slice().reverse().map((item, index) => (
-              <div key={index} className="card">
-                <span>{item.timestamp}</span>
-                <span>{item.type}</span>
-                <span>{item.text}</span>
-              </div>
-            ))}
+            <div className="col">
+              {summaries.slice().reverse().map((item, index) => (
+                <div key={index} className="card">
+                  <span>{item.timestamp}</span>
+                  <span>{item.type}</span>
+                  <span>{item.text}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
         </div>

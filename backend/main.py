@@ -17,9 +17,10 @@ SAMPLE_RATE = 16000
 CHUNK_DURATION = 10  # seconds
 BEAM_SIZE = 10  # 1=fastest, 10=best accuracy
 
+
 # load whisper model
 model = WhisperModel(MODEL_SIZE, compute_type=COMPUTE_TYPE)
-print("whisper model loaded")
+
 
 LLAMA_SYSTEM_PROMPT = """
 You are a helpful assistant connected to a speech-to-text system. Your only job is to act as a brain and notetaker, remember, summarize, and extract to-do items from user speech, nothing else.
@@ -75,7 +76,9 @@ def send_status(status):
 session_id = create_session_id()
 current_message = ""
 
+
 print("INITIALIZED")
+
 
 if __name__ == "__main__":
 
