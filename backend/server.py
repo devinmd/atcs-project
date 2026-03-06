@@ -1,17 +1,32 @@
 import sqlite3
+import threading
 import socketio
-import eventlet
-import eventlet.wsgi
-
+from werkzeug.serving import make_server
 
 DB_FILE = "data.db"
 PORT = 5500
 
-# create a socketio server
-sio = socketio.Server(cors_allowed_origins="*")
-
-# wrap with a wsgi app
+# create socketio server
+# threading mode works with blocking audio loop in another thread.
+# emitting from the audio thread is safe.
+sio = socketio.Server(cors_allowed_origins="*", async_mode="threading")
 app = socketio.WSGIApp(sio)
+
+current_status = []
+_status_lock = threading.Lock() # prevents multiple threads from accessing current_status at the same time
+
+def add_status(activity):
+    with _status_lock:
+        if activity not in current_status:
+            current_status.append(activity)
+        sio.emit("status", {"status": list(current_status)})
+
+
+def remove_status(activity):
+    with _status_lock:
+        if activity in current_status:
+            current_status.remove(activity)
+        sio.emit("status", {"status": list(current_status)})
 
 
 def query_db(query):
@@ -26,26 +41,25 @@ def query_db(query):
 
 @sio.event
 def connect(sid, environ):
-    print('CONNECTED:', sid)
-    sio.emit('my message', {'foo': 'bar'})
+    print("CONNECTED:", sid)
+    with _status_lock:
+        sio.emit("status", {"status": list(current_status)}, to=sid)
+    send_all_speech(sid)
+    send_all_summaries(sid)
 
 
-# send sall speech data to client
-@sio.event
-def get_all_speech(sid):
+def send_all_speech(sid):
     print("client request all speech data:", sid)
     data = query_db("SELECT * FROM speech")
     sio.emit("all_speech", data, to=sid)
 
 
-# send all summary data to client
-@sio.event
-def get_all_summaries(sid):
+def send_all_summaries(sid):
     print("client request all summary data:", sid)
     data = query_db("SELECT * FROM summary")
     sio.emit("all_summaries", data, to=sid)
 
 
-# start the socketio server
 def start_socket_server():
-    eventlet.wsgi.server(eventlet.listen(('', PORT)), app)
+    server = make_server("", PORT, app, threaded=True)
+    server.serve_forever()

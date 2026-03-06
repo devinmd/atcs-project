@@ -47,6 +47,14 @@
   color: #ff3838;
 }
 
-.loading {
+.idle {
   color: #808080;
+}
+
+.transcribing {
+  color: var(--text-color);
+}
+
+.listening {
+  color: #2d7eff;
 }

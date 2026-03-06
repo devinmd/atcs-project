@@ -15,7 +15,6 @@ def insert_speech(text, session_id=0):
     conn.commit()
     conn.close()
 
-    print("Inserted speech into database")
 
 
 # insert summary into the database
@@ -35,7 +34,6 @@ def insert_summary(speech_ids=[-1], text="", type="", session_id=-1):
 
     conn.commit()
     conn.close()
-    print("Inserted summary into database")
 
 
 # retrieve speech from the database (last 10 entries)
@@ -71,5 +69,4 @@ def create_session_id():
     conn.commit()
     conn.close()
 
-    print(f"SESSION ID: {session_id+1}")
     return session_id+1

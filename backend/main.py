@@ -1,13 +1,14 @@
 import json
-from llama_cpp import Llama
 import threading
+import time
+from llama_cpp import Llama
 from faster_whisper import WhisperModel
 import sounddevice as sd
 import numpy as np
 import queue
 import sys
 from store import create_session_id, insert_speech, insert_summary
-from server import start_socket_server
+from server import start_socket_server, sio, add_status, remove_status
 
 
 # whisper settings
@@ -64,30 +65,22 @@ audio_queue = queue.Queue()
 
 def audio_callback(indata, frames, time, status):
     # runs after every sample is collected and puts it into a queue
+    add_status("listening")
     if status:
         print(status, file=sys.stderr)
     audio_queue.put(indata.copy())
 
 
-def send_status(status):
-    print(status)
-
-
 session_id = create_session_id()
-current_message = ""
 
 
 print("INITIALIZED")
 
+current_message = ""
 
-if __name__ == "__main__":
 
-    # start socketio in a background thread
-    socket_thread = threading.Thread(
-        target=start_socket_server,
-        daemon=True
-    )
-    socket_thread.start()
+def audio_loop():
+    global current_message
 
     with sd.InputStream(
         samplerate=SAMPLE_RATE,
@@ -99,11 +92,8 @@ if __name__ == "__main__":
         try:
             while True:
 
-                send_status("listening")
-
+                add_status("listening")
                 print("LISTENING...")
-
-                audio_data = []
 
                 # collect audio for CHUNK_DURATION seconds
                 audio_data = []
@@ -115,15 +105,16 @@ if __name__ == "__main__":
                     chunk = audio_queue.get()
                     audio_data.append(chunk)
                     samples_collected += len(chunk)
+                    # print(samples_collected / SAMPLE_RATE)
 
-                print("DONE LISTENING")
-                print("TRANSCRIBING...")
+                remove_status("listening")
+                add_status("transcribing")
+                print("TRANSCRIBING", samples_collected / SAMPLE_RATE, "seconds")
                 # concatenate audio chunks
                 audio_np = np.concatenate(audio_data, axis=0).flatten()
                 # transcribe with whisper
                 segments, info = model.transcribe(
                     audio_np, beam_size=BEAM_SIZE, language="en", condition_on_previous_text=True)
-                print("DONE TRANSCRIBING...")
 
                 for segment in segments:
                     text = segment.text.strip()
@@ -132,16 +123,19 @@ if __name__ == "__main__":
                         print("DETECTED:", text)
                         current_message = current_message.strip()
 
+                remove_status("transcribing")
+
                 if len(current_message) > MESSAGE_CHUNK_SIZE:
                     # if message length exceeds threshold, summarize and store
-
-                    send_status("processing")
-
+                    # this is blocking, BUT, the audio callback continues to run continuously collecting chunks so it is recording during this as well
+                    add_status("processing")
+                    print("PROCESSING SPEECH", samples_collected /
+                          SAMPLE_RATE, "seconds")
                     print("FULL MESSAGE TO SUMMARIZE:", current_message)
                     insert_speech(text=current_message, session_id=session_id)
 
                     summaryString = summarize_text(current_message).strip()
-
+                    time.sleep(1)
                     try:
                         summaryJSON = json.loads(summaryString)
                     except json.JSONDecodeError:
@@ -154,7 +148,18 @@ if __name__ == "__main__":
                     insert_summary(type=summaryJSON["type"],
                                    text=summaryJSON["text"], session_id=session_id)
                     current_message = ""
-                    send_status("done processing")
+                    remove_status("processing")
+                    print("DONE PROCESSING SPEECH")
 
         except KeyboardInterrupt:
             print("\nStopped")
+
+
+if __name__ == "__main__":
+    # run socketio server in a daemon thread so the main thread can run the audio loop
+    server_thread = threading.Thread(target=start_socket_server, daemon=True)
+    server_thread.start()
+    time.sleep(0.5)
+
+    # main thread runs the blocking audio loop, it can make sio.emit() calls safely because of threading async_mode
+    audio_loop()

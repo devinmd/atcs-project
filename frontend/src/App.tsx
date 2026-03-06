@@ -23,23 +23,22 @@ interface summaryData {
 function App() {
 
   const [connected, setConnected] = useState(false);
-  const [status, setStatus] = useState("Not connected");
+  const [status, setStatus] = useState("");
   const [speech, setSpeech] = useState<speechData[]>([]);
   const [summaries, setSummaries] = useState<summaryData[]>([]);
 
   useEffect(() => {
     function onConnect() {
       setConnected(true);
-      socket.emit("get_all_speech");
-      socket.emit("get_all_summaries");
     }
 
     function onDisconnect() {
       setConnected(false);
+      setStatus("");
     }
 
-    function onStatusChange(data: string) {
-      setStatus(data);
+    function onStatusChange(data: { status: string }) {
+      setStatus(data.status);
     }
 
     function onAllSpeechData(data: speechData[]) {
@@ -56,14 +55,14 @@ function App() {
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
-    socket.on('app_status', onStatusChange);
+    socket.on('status', onStatusChange);
     socket.on('all_speech', onAllSpeechData);
     socket.on('all_summaries', onAllSummaryData);
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
-      socket.off('app_status', onStatusChange);
+      socket.off('status', onStatusChange);
       socket.off('all_speech', onAllSpeechData);
       socket.off('all_summaries', onAllSummaryData);
     };
@@ -75,8 +74,8 @@ function App() {
 
         <div className='card'>
           <h2>Status</h2>
-          <span className={connected ? "connected" : "not-connected"}>{connected ? "Connected" : "Not connected"}</span>
-          <span className={status.toLowerCase().replaceAll(" ", "-")}>{status}</span>
+          <span className={connected ? "connected" : "not-connected"}>• {connected ? "Connected" : "Not connected"}</span>
+          <span>• {status}</span>
         </div>
 
         <div className="split">
