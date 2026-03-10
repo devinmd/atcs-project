@@ -8,14 +8,14 @@ import numpy as np
 import queue
 import sys
 from store import create_session_id, insert_speech, insert_summary
-from server import start_socket_server, sio, add_status, remove_status
+from server import start_socket_server, add_status, remove_status
 
 
 # whisper settings
 MODEL_SIZE = "base"  # tiny, base, small, medium, large-v3
 COMPUTE_TYPE = "float32"  # int8, int16, float16, float32
 SAMPLE_RATE = 16000
-CHUNK_DURATION = 10  # seconds
+CHUNK_DURATION = 30  # seconds
 BEAM_SIZE = 10  # 1=fastest, 10=best accuracy
 
 
@@ -32,7 +32,7 @@ You are always summarizing or taking notes of the content you are given.
 Only ever respond with JSON formatted as follows: {"type": "summary" | "todo" | "other" | "remember"| "note", "text": "concise summary of the users speech here"}
 """
 
-MESSAGE_CHUNK_SIZE = 50
+MESSAGE_CHUNK_SIZE = 100
 
 # initialize the LLM
 llm = Llama(
@@ -65,7 +65,6 @@ audio_queue = queue.Queue()
 
 def audio_callback(indata, frames, time, status):
     # runs after every sample is collected and puts it into a queue
-    add_status("listening")
     if status:
         print(status, file=sys.stderr)
     audio_queue.put(indata.copy())
@@ -92,7 +91,7 @@ def audio_loop():
         try:
             while True:
 
-                add_status("listening")
+                add_status("Listening")
                 print("LISTENING...")
 
                 # collect audio for CHUNK_DURATION seconds
@@ -107,8 +106,8 @@ def audio_loop():
                     samples_collected += len(chunk)
                     # print(samples_collected / SAMPLE_RATE)
 
-                remove_status("listening")
-                add_status("transcribing")
+                remove_status("Listening")
+                add_status("Transcribing")
                 print("TRANSCRIBING", samples_collected / SAMPLE_RATE, "seconds")
                 # concatenate audio chunks
                 audio_np = np.concatenate(audio_data, axis=0).flatten()
@@ -123,12 +122,12 @@ def audio_loop():
                         print("DETECTED:", text)
                         current_message = current_message.strip()
 
-                remove_status("transcribing")
+                remove_status("Transcribing")
 
                 if len(current_message) > MESSAGE_CHUNK_SIZE:
                     # if message length exceeds threshold, summarize and store
                     # this is blocking, BUT, the audio callback continues to run continuously collecting chunks so it is recording during this as well
-                    add_status("processing")
+                    add_status("Processing")
                     print("PROCESSING SPEECH", samples_collected /
                           SAMPLE_RATE, "seconds")
                     print("FULL MESSAGE TO SUMMARIZE:", current_message)
@@ -148,7 +147,7 @@ def audio_loop():
                     insert_summary(type=summaryJSON["type"],
                                    text=summaryJSON["text"], session_id=session_id)
                     current_message = ""
-                    remove_status("processing")
+                    remove_status("Processing")
                     print("DONE PROCESSING SPEECH")
 
         except KeyboardInterrupt:

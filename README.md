@@ -46,4 +46,4 @@ npm i
 
 3. Run `npm run dev` in `/frontend` to host the web interface
 
-4. Navigate to `localhost:PORT` in any web browser to access the web interface (PORT is whatever port # showed up in the console after running the frontend webserver, most likely 5173)
+4. Navigate to `localhost:PORT` in any web browser to access the web interface (PORT is whatever port # showed up in the console after running the frontend webserver)

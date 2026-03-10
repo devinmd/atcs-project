@@ -1,17 +1,88 @@
-.content {
+.topnav {
+  display: flex;
+  gap: 2rem;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--bg-l2);
+  background-color: var(--bg-l1);
+  box-sizing: border-box;
+  align-items: center;
+  height: 3rem;
+  top: 0;
+  width: 100%;
+  position: fixed;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  gap: 1rem;
+  padding: 0 1rem;
+  border-top: 1px solid var(--bg-l2);
+  background-color: var(--bg-l1);
+  box-sizing: border-box;
+  align-items: center;
+  height: 2rem;
+  width: 100%;
+  font-size: 0.75rem;
+}
+
+.main {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  padding: 2rem;
+  gap: 1rem;
+  padding: 1rem;
+  margin-top: 3rem;
+  overflow: hidden;
+  box-sizing: border-box;
+  height: calc(100vh - 5rem);
+  max-height: calc(100vh - 5rem);
 }
 
-.content .split {
+input.message-input {
+  background-color: var(--bg-l1);
+  outline: none;
+  border: none;
+  height: 2rem;
+  border-radius: 0.5rem;
+  padding: 0 1rem;
+  color: var(--text-color);
+  font-size: 1rem;
+  max-width: 480px;
+  transition: 100ms;
+}
+
+input.message-input:hover,
+input.message-input:focus {
+  background-color: var(--bg-l2);
+}
+
+button.send-message {
+  height: 2rem;
+  min-width: 2rem;
+  border-radius: 0.5rem;
+  background-color: #2d76ff60;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: auto;
+  cursor: pointer;
+  padding: 0 1rem;
+  border: none;
+  transition: 100ms;
+  outline: none;
+}
+button.send-message:hover {
+  background-color: #2d76ff;
+}
+
+.main .cols {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  gap: 1rem;
 }
 
-.content .col {
+.main .col {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -20,17 +91,32 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   min-height: 3rem;
   border: 1px solid var(--bg-l2);
   border-radius: 1rem;
-  background-color: var(--bg-l1);
   box-sizing: border-box;
+  overflow: hidden;
+  max-height: 50vh;
+}
+
+.card .card-title {
+  border-bottom: 1px solid var(--bg-l2);
+  /* background-color: var(--bg-l1); */
   padding: 1rem;
 }
 
+.card .card-content {
+  overflow: scroll;
+  padding: 1rem;
+}
+
+.card .card {
+  background-color: var(--bg-l1);
+  border: none;
+  border-radius: 0.5rem;
+}
+
 .card .col .card {
-  gap: 0;
   padding: 0.5rem 1rem;
 }
 
@@ -39,11 +125,12 @@
 }
 
 .success,
-.connected {
+.online {
   color: #15ff53;
 }
 .error,
-.not-connected {
+.not-connected,
+.offline {
   color: #ff3838;
 }
 
@@ -52,9 +139,13 @@
 }
 
 .transcribing {
-  color: var(--text-color);
+  color: #2d7eff;
 }
 
 .listening {
+  color: #2d7eff;
+}
+
+.processing {
   color: #2d7eff;
 }

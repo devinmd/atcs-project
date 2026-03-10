@@ -44,9 +44,17 @@ def connect(sid, environ):
     print("CONNECTED:", sid)
     with _status_lock:
         sio.emit("status", {"status": list(current_status)}, to=sid)
+    send_app_data(sid)
     send_all_speech(sid)
     send_all_summaries(sid)
 
+def send_app_data(sid):
+  data= {
+    "version": "0.0.0",
+    "model": "Llama 3.2 8B Instruct IQ4 XS",
+    "microphone": "Default Microphone"
+  }
+  sio.emit("app_data", data, to=sid)
 
 def send_all_speech(sid):
     print("client request all speech data:", sid)
@@ -55,8 +63,8 @@ def send_all_speech(sid):
 
 
 def send_all_summaries(sid):
-    print("client request all summary data:", sid)
-    data = query_db("SELECT * FROM summary")
+    print("client request all summaries data:", sid)
+    data = query_db("SELECT * FROM summaries")
     sio.emit("all_summaries", data, to=sid)
 
 
