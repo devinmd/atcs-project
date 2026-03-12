@@ -11,6 +11,11 @@ interface speechData {
   session_id: number;
 }
 
+interface summaryResponse {
+  type: string;
+  data: summaryData[]
+}
+
 interface summaryData {
   id: number;
   type: string;
@@ -53,8 +58,8 @@ function App() {
       setSpeech(data);
     }
 
-    function onAllSummaryData(data: summaryData[]) {
-      setSummaries(data);
+    function onAllSummaryData(data: summaryResponse) {
+      setSummaries(data.data);
     }
     function onAppData(data: appData) {
       setAppData(data);

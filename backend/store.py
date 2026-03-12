@@ -16,18 +16,18 @@ def insert_speech(text, session_id=0):
     conn.close()
 
 
-
 # insert summary into the database
-def insert_summary( text="", type="", session_id=-1):
+def insert_summary(text="", type="", deadline="", session_id=-1):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO summaries ( text, type, session_id)
-    VALUES ( ?, ?, ?)
+    INSERT INTO summaries ( type, text, deadline, session_id)
+    VALUES ( ?, ?, ?, ?)
     """, (
-        text,
         type,
+        text,
+        deadline,
         session_id
     ))
 

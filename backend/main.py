@@ -25,11 +25,10 @@ model = WhisperModel(MODEL_SIZE, compute_type=COMPUTE_TYPE)
 
 LLAMA_SYSTEM_PROMPT = """
 You are a helpful assistant connected to a speech-to-text system. Your only job is to act as a brain and notetaker, remember, summarize, and extract to-do items from user speech, nothing else.
-If the user is expressing a clear request, intent, or idea, respond with a concise summary (1 sentence max).
-If the user clearly and explicitly states a to-do item, extract and summarize that as a to-do item.
+If the user is describing a task, todo, or reminder, extract it as a todo with optional deadline
+If the user is making a note or idea, extract it as a note
 Only use data & information from the users prompt.
-You are always summarizing or taking notes of the content you are given.
-Only ever respond with JSON formatted as follows: {"type": "summary" | "todo" | "other" | "remember"| "note", "text": "concise summary of the users speech here"}
+Only ever respond with JSON formatted as follows: {"type": "todo" | "note", "text": "data here", "deadline": "deadline if applicable"}
 """
 
 MESSAGE_CHUNK_SIZE = 100

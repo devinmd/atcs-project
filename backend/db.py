@@ -25,6 +25,7 @@ def initialize_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         type TEXT NOT NULL,
         text TEXT NOT NULL,
+        deadline TEXT NOT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         session_id INTEGER
     )
