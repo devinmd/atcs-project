@@ -35,7 +35,7 @@ function App() {
   const date = new Date();
 
   const [connected, setConnected] = useState(false);
-  const [status, setStatus] = useState("Not connected");
+  const [status, setStatus] = useState<string[]>([]);
   const [speech, setSpeech] = useState<speechData[]>([]);
   const [summaries, setSummaries] = useState<summaryData[]>([]);
   const [appData, setAppData] = useState<appData>();
@@ -47,10 +47,10 @@ function App() {
 
     function onDisconnect() {
       setConnected(false);
-      setStatus("");
+      setStatus([]);
     }
 
-    function onStatusChange(data: { status: string }) {
+    function onStatusChange(data: { status: string[] }) {
       setStatus(data.status);
     }
 
@@ -164,7 +164,10 @@ function App() {
 
       <div className="bottom-nav">
         <span className={connected ? "online" : "offline"}>• {connected ? "Connected" : "Not connected"}</span>
-        {connected && (<span className={status.toString().toLowerCase().replaceAll(" ", '-')}>• {status ? status : "Not connected"}</span>)}
+        {status.map((s, index) => (
+          <span className={s.toLowerCase().replaceAll(" ", "-")}>• {s}</span>
+
+        ))}
         {appData && (<>
           <span>v{appData.version}</span>
           <span>{appData.model}</span>
