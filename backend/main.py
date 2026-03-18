@@ -23,9 +23,6 @@ llm = Llama(
 )
 
 
-
-
-
 def audio_callback(indata, frames, time, status):
     # runs after every sample is collected and puts it into a queue
     if status:
@@ -61,8 +58,5 @@ if __name__ == "__main__":
     threading.Thread(target=create_text_chunks_worker, daemon=True).start()
     threading.Thread(target=llm_worker, daemon=True).start()
     time.sleep(0.5)
-    
     add_status("Listening")
-
-    # main thread runs the blocking audio loop, it can make sio.emit() calls safely because of threading async_mode
     audio_loop()

@@ -1,4 +1,4 @@
-export function relativeDateTime(dateString: string) {
+export function formatDate(dateString: string) {
   // get string from database (UTC) and convert to Date object with conversion to local time
   const isoString = dateString.replace(" ", "T") + "Z";
   const date = new Date(isoString);

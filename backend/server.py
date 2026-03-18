@@ -78,6 +78,16 @@ def send_all_summaries(sid, type):
 
     sio.emit("all_summaries", {"type": type, "data": data}, to=sid)
 
+@sio.event
+def delete_summary(sid, id):
+    print("deleting summary", id)
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    cur.execute("DELETE FROM summaries WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return {"deleted": id}
+    
 
 def start_socket_server():
     server = make_server("", PORT, app, threaded=True)

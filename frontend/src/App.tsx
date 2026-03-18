@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 
 import { socket } from './socket';
-import { relativeDateTime } from './helpers';
+import { formatDate } from './helpers';
 
 interface speechData {
   timestamp: string;
@@ -12,8 +12,8 @@ interface speechData {
 }
 
 interface summaryResponse {
-  type: string;
-  data: summaryData[]
+  type: "todo" | "note";
+  data: summaryData[];
 }
 
 interface summaryData {
@@ -22,6 +22,11 @@ interface summaryData {
   text: string;
   timestamp: string;
   session_id: number;
+}
+
+interface allSummaries {
+  todo: summaryData[];
+  note: summaryData[];
 }
 
 interface appData {
@@ -37,8 +42,13 @@ function App() {
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string[]>([]);
   const [speech, setSpeech] = useState<speechData[]>([]);
-  const [summaries, setSummaries] = useState<summaryData[]>([]);
+  const [summaries, setSummaries] = useState<allSummaries>();
   const [appData, setAppData] = useState<appData>();
+
+  function deleteSummary(id: number) {
+    console.log("delete summary", id)
+    socket.emit("delete_summary", id)
+  }
 
   useEffect(() => {
     function onConnect() {
@@ -59,7 +69,10 @@ function App() {
     }
 
     function onAllSummaryData(data: summaryResponse) {
-      setSummaries(data.data);
+      setSummaries(prev => ({
+        ...prev,
+        [data.type]: data.data
+      } as allSummaries));
     }
     function onAppData(data: appData) {
       setAppData(data);
@@ -92,9 +105,7 @@ function App() {
         <span>ATCS Project Dashboard</span>
         <span>{date.toDateString()}</span>
       </div>
-
       <div className="main">
-
         <div className="cols" style={{ gridTemplateColumns: "1fr 1fr" }}>
           <div className='card'>
             <div className="card-title">
@@ -106,44 +117,53 @@ function App() {
             </div>
           </div>
           <div className="card">
-
             <div className="card-title">
               <h3>Title</h3>
             </div>
           </div>
         </div>
-
         <div className="cols" style={{ gridTemplateColumns: "1fr 1fr 1fr", flexGrow: "1" }}>
-
           <div className='card' >
             <div className="card-title">
               <h3>Reminders & To-do</h3>
             </div>
             <div className="card-content">
-              <div className="col" >
-                {summaries.slice().reverse().map((item, index) => (
+              <div></div>
+              {summaries && <div className="col" >
+                {summaries.todo.slice().reverse().map((item, index) => (
+                  <div key={index} className="card" style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
+                    <div style={{ paddingTop: "0.5rem", flexDirection: "column", display: "flex" }} >
+                      <input type="checkbox" style={{ width: "1rem", height: "1rem", margin: 0 }} />
+                      <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteSummary(item.id)}>X</button>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span>{formatDate(item.timestamp)}</span>
+                      <span>{item.text}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>}
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-title"><h3>Notes & Summaries</h3></div>
+            <div className="card-content">
+              {summaries && <div className="col" >
+                {summaries.note.slice().reverse().map((item, index) => (
                   <div key={index} className="card">
-                    <span>{relativeDateTime(item.timestamp)}</span>
-                    <span>{item.type}</span>
+                    <span>{formatDate(item.timestamp)}</span>
                     <span>{item.text}</span>
                   </div>
                 ))}
-              </div>
+              </div>}
             </div>
           </div>
-
-          <div className="card">
-            <div className="card-title"><h3>Notes & Summaries</h3></div>
-            <div className="card-content"></div>
-          </div>
-
           <div className="card">
             <div className="card-title"><h3>
               Other</h3></div>
             <div className="card-content"></div>
           </div>
         </div>
-
         <div className='card'  >
           <div className="card-title">
             <h3>Speech</h3>
@@ -152,21 +172,17 @@ function App() {
             <div className="col">
               {speech.slice().reverse().map((item, index) => (
                 <div key={index}>
-                  <span>{relativeDateTime(item.timestamp)}<br />{item.text}</span>
-                  <span></span>
+                  <span>{formatDate(item.timestamp)}<br />{item.text}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-
       </div>
-
       <div className="bottom-nav">
         <span className={connected ? "online" : "offline"}>• {connected ? "Connected" : "Not connected"}</span>
         {status.map((s, index) => (
-          <span className={s.toLowerCase().replaceAll(" ", "-")}>• {s}</span>
-
+          <span key={index} className={s.toLowerCase().replaceAll(" ", "-")}>• {s}</span>
         ))}
         {appData && (<>
           <span>v{appData.version}</span>

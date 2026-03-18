@@ -2,7 +2,7 @@
 MODEL_SIZE = "base"  # tiny, base, small, medium, large-v3
 COMPUTE_TYPE = "float32"  # int8, int16, float16, float32
 SAMPLE_RATE = 16000
-CHUNK_DURATION = 5  # seconds
+CHUNK_DURATION = 30  # seconds
 BEAM_SIZE = 10  # 1=fastest, 10=best accuracy
 
 # system prompt for llm
@@ -14,4 +14,4 @@ Only use data & information from the users prompt.
 Only ever respond with JSON formatted as follows: {"type": "todo" | "note", "text": "data here", "deadline": "deadline if applicable"}
 """
 
-MESSAGE_CHUNK_SIZE = 20
+MESSAGE_CHUNK_SIZE = 100
