@@ -1,18 +1,31 @@
 import json
 import numpy as np
 import queue
-from server import add_status, remove_status
-from store import insert_summary
-from main import session_id
 from config import *
 from main import model, llm
+from store import insert_summary, insert_speech
+from server import add_status, remove_status
 
+import threading
 
 # queues for all processes
 audio_queue = queue.Queue()
 transcription_queue = queue.Queue()
 text_queue = queue.Queue()
 llm_queue = queue.Queue()
+
+
+audio_on = threading.Event()
+
+
+def toggle_audio(on):
+    print(on)
+    if on:
+        audio_on.set()
+        add_status("Listening")
+    else:
+        audio_on.clear()
+        remove_status("Listening")
 
 
 # make the llm summaries, llm queue -> database
@@ -46,7 +59,6 @@ def llm_worker():
         insert_summary(
             type=summaryJSON["type"],
             text=summaryJSON["text"],
-            session_id=session_id
         )
         remove_status("Processing")
 
@@ -76,6 +88,7 @@ def create_text_chunks_worker():
         # if message is over MESSAGE_CHUNK_SIZE, then send to llm
         if len(current_message) > MESSAGE_CHUNK_SIZE:
             llm_queue.put(current_message)
+            insert_speech(current_message)
             current_message = ""
 
 

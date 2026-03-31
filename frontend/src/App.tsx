@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-
 import { socket } from './socket';
 import { formatDate } from './helpers';
 
@@ -38,16 +37,28 @@ interface appData {
 function App() {
 
   const date = new Date();
-
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string[]>([]);
   const [speech, setSpeech] = useState<speechData[]>([]);
   const [summaries, setSummaries] = useState<allSummaries>();
   const [appData, setAppData] = useState<appData>();
+  const [inputValue, setInputValue] = useState('');
+  const [micOn, setMicOn] = useState(false);
 
   function deleteSummary(id: number) {
-    console.log("delete summary", id)
     socket.emit("delete_summary", id)
+  }
+
+  function toggleMic(){
+    setMicOn(!micOn);
+    socket.emit("toggle_mic", micOn)
+  }
+
+  function sendText(text: string) {
+    setInputValue("")
+    if (text.replaceAll(" ", "") == "")
+      return
+    socket.emit("written_text", text)
   }
 
   useEffect(() => {
@@ -74,6 +85,7 @@ function App() {
         [data.type]: data.data
       } as allSummaries));
     }
+
     function onAppData(data: appData) {
       setAppData(data);
     }
@@ -102,7 +114,7 @@ function App() {
   return (
     <>
       <div className="topnav">
-        <span>ATCS Project Dashboard</span>
+        <span>AT CS Project Dashboard</span>
         <span>{date.toDateString()}</span>
       </div>
       <div className="main">
@@ -112,8 +124,12 @@ function App() {
               <h3>Welcome</h3>
             </div>
             <div className="card-content" style={{ display: "flex", gap: "0.5rem" }}>
-              <input className='message-input' type="text" placeholder='Type a message here' />
-              <button className='send-message'>Send</button>
+              <button className='toggle-mic-btn' onClick={() => {toggleMic()}}>{micOn ? "Turn off Microphone" : "Turn on Microphone"}</button>
+              <input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className='message-input' type="text" placeholder='Type a message here' />
+              <button className='send-message-btn' onClick={() => sendText(inputValue)}>Send</button>
             </div>
           </div>
           <div className="card">
@@ -151,8 +167,13 @@ function App() {
               {summaries && <div className="col" >
                 {summaries.note.slice().reverse().map((item, index) => (
                   <div key={index} className="card">
-                    <span>{formatDate(item.timestamp)}</span>
-                    <span>{item.text}</span>
+                    <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
+                      <span>{formatDate(item.timestamp)}</span>
+                      <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteSummary(item.id)}>X</button>
+                    </div>
+                    <div>
+                      <span>{item.text}</span>
+                    </div>
                   </div>
                 ))}
               </div>}

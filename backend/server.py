@@ -2,6 +2,7 @@ import sqlite3
 import threading
 import socketio
 from werkzeug.serving import make_server
+from store import insert_summary, insert_speech
 
 DB_FILE = "data.db"
 PORT = 5500
@@ -73,10 +74,11 @@ def send_all_summaries(sid, type):
         query = f"SELECT * FROM summaries WHERE type = '{type}'"
     else:
         query = "SELECT * FROM summaries"
-        
+
     data = query_db(query)
 
     sio.emit("all_summaries", {"type": type, "data": data}, to=sid)
+
 
 @sio.event
 def delete_summary(sid, id):
@@ -87,7 +89,18 @@ def delete_summary(sid, id):
     conn.commit()
     conn.close()
     return {"deleted": id}
-    
+
+
+@sio.event
+def written_text(sid, msg):
+    insert_speech(msg)
+
+
+@sio.event
+def toggle_mic(sid, value):
+    from workers import toggle_audio
+    toggle_audio(value)
+
 
 def start_socket_server():
     server = make_server("", PORT, app, threaded=True)

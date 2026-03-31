@@ -58,12 +58,11 @@ input.message-input:focus {
   background-color: var(--bg-l2);
 }
 
-button.send-message {
+button {
   height: 2rem;
   min-width: 2rem;
   border-radius: 0.5rem;
-  background-color: #2d76ff60;
-  color: white;
+  color: var(--text-color);
   font-size: 0.875rem;
   font-weight: 500;
   margin-top: auto;
@@ -71,9 +70,18 @@ button.send-message {
   padding: 0 1rem;
   border: none;
   transition: 100ms;
+  background-color: var(--bg-l1);
   outline: none;
 }
-button.send-message:hover {
+
+button:hover {
+  background-color: var(--bg-l2);
+}
+
+button.send-message-btn {
+  background-color: #2d76ff60;
+}
+button.send-message-btn:hover {
   background-color: #2d76ff;
 }
 

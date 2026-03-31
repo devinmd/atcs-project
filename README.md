@@ -7,6 +7,7 @@ App that transcribes the user's microphone input and then summarizes the content
 ### Install Python
 
 MacOS (Homebrew)
+
 ```
 brew install python
 ```
@@ -14,6 +15,7 @@ brew install python
 ### Install Hugging Face CLI (to download models)
 
 MacOS
+
 ```
 curl -LsSf https://hf.co/cli/install.sh | bash
 ```

@@ -4,7 +4,6 @@ from llama_cpp import Llama
 from faster_whisper import WhisperModel
 import sounddevice as sd
 import sys
-from store import create_session_id
 from server import start_socket_server
 from config import *
 from workers import *
@@ -23,40 +22,52 @@ llm = Llama(
 )
 
 
+# runs after every sample is collected and puts it into a queue
 def audio_callback(indata, frames, time, status):
-    # runs after every sample is collected and puts it into a queue
     if status:
         print(status, file=sys.stderr)
-    audio_queue.put(indata.copy())
+    if audio_on.is_set():
+        audio_queue.put(indata.copy())
 
 
-session_id = create_session_id()
 print("INITIALIZED")
 
 
 def audio_loop():
-    with sd.InputStream(
-        samplerate=SAMPLE_RATE,
-        channels=1,
-        callback=audio_callback,
-        dtype="float32"
-    ):
-        print("AUDIO STREAM STARTED")
+    while True:
 
+        audio_on.wait()
+        print('opening mic')
         try:
-            while True:
-                time.sleep(1)  # keep thread alive
-        except KeyboardInterrupt:
-            print("Stopped")
+            with sd.InputStream(
+                samplerate=SAMPLE_RATE,
+                channels=1,
+                callback=audio_callback,
+                dtype="float32"
+            ):
+                print("AUDIO STREAM ACTIVE")
+
+                while audio_on.is_set():
+                    time.sleep(0.1)
+
+            print("closing mic")
+        except Exception as e:
+            print(f"Audio Error: {e}")
+            audio_on.clear()
 
 
 if __name__ == "__main__":
-    # run socketio server in a daemon thread so the main thread can run the audio loop
+    # run services as daemon threads so the main thread can run the audio loop
     threading.Thread(target=start_socket_server, daemon=True).start()
     threading.Thread(target=audio_worker, daemon=True).start()
     threading.Thread(target=transcribe_audio_worker, daemon=True).start()
     threading.Thread(target=create_text_chunks_worker, daemon=True).start()
     threading.Thread(target=llm_worker, daemon=True).start()
-    time.sleep(0.5)
-    add_status("Listening")
-    audio_loop()
+    threading.Thread(target=audio_loop, daemon=True).start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        sys.exit()
+    # time.sleep(0.5)
+    # audio_loop()

@@ -1,9 +1,10 @@
 from db import get_connection
+# from main import session_id
 
 # insert speech into the database
 
 
-def insert_speech(text, session_id=0):
+def insert_speech(text):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -17,7 +18,7 @@ def insert_speech(text, session_id=0):
 
 
 # insert summary into the database
-def insert_summary(text="", type="", deadline="", session_id=-1):
+def insert_summary(text="", type="", deadline=""):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -69,3 +70,6 @@ def create_session_id():
     conn.close()
 
     return session_id+1
+
+
+session_id = create_session_id()
