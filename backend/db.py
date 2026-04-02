@@ -13,20 +13,21 @@ def initialize_db():
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS speech (
+        CREATE TABLE IF NOT EXISTS entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        text TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         session_id INTEGER
     )
     """)
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS summaries (
+    CREATE TABLE IF NOT EXISTS entities (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         type TEXT NOT NULL,
-        text TEXT NOT NULL,
-        deadline TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        content TEXT NOT NULL,
+        status TEXT,
+        date TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         session_id INTEGER
     )
     """)

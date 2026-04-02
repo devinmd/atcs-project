@@ -1,34 +1,34 @@
 from db import get_connection
 # from main import session_id
 
-# insert speech into the database
 
-
-def insert_speech(text):
+# insert entry into the database
+def add_entry(content):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO speech (text, session_id)
+    INSERT INTO entries (content, session_id)
     VALUES (?, ?)
-    """, (text, session_id))
+    """, (content, session_id))
 
     conn.commit()
     conn.close()
 
 
-# insert summary into the database
-def insert_summary(text="", type="", deadline=""):
+# insert entity into the database
+def add_entity(content="", type="", status="",date=""):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO summaries ( type, text, deadline, session_id)
-    VALUES ( ?, ?, ?, ?)
+    INSERT INTO entities ( type, content, status, date, session_id)
+    VALUES ( ?, ?, ?, ?, ?)
     """, (
         type,
-        text,
-        deadline,
+        content,
+        status,
+        date,
         session_id
     ))
 
@@ -36,29 +36,36 @@ def insert_summary(text="", type="", deadline=""):
     conn.close()
 
 
-# retrieve speech from the database (last 10 entries)
-def get_speech(limit=10):
+# helper to add multiple entities
+def add_entities(data):
+    for i in data:
+        add_entity(i["content"], i["type"],i["status"], i["date"])
+
+
+# returns a list of the last X entries' content
+def get_entries(limit=10):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-    SELECT id, text FROM speech
+    SELECT content FROM entries
     ORDER BY id ASC
     LIMIT ?
     """, (limit,))
 
     rows = cur.fetchall()
     conn.close()
-    return rows
+
+    return [row[0] for row in rows]
 
 
-#
+# generate a session id
 def create_session_id():
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-    SELECT id, text, timestamp, session_id FROM speech
+    SELECT id, content, created_at, session_id FROM entries
     ORDER BY id DESC
     LIMIT ?
     """, (1,))

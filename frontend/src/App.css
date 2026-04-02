@@ -49,7 +49,8 @@ input.message-input {
   padding: 0 1rem;
   color: var(--text-color);
   font-size: 1rem;
-  max-width: 480px;
+  flex-grow: 1;
+  font-size: 0.875rem;
   transition: 100ms;
 }
 
@@ -78,10 +79,10 @@ button:hover {
   background-color: var(--bg-l2);
 }
 
-button.send-message-btn {
+button.btn-accent {
   background-color: #2d76ff60;
 }
-button.send-message-btn:hover {
+button.btn-accent:hover {
   background-color: #2d76ff;
 }
 

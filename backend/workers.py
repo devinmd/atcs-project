@@ -3,7 +3,7 @@ import numpy as np
 import queue
 from config import *
 from main import model, llm
-from store import insert_summary, insert_speech
+from store import add_entity, add_entry
 from server import add_status, remove_status
 
 import threading
@@ -39,8 +39,6 @@ while True
         fallback to a different json object
     store summary in database
 '''
-
-
 def llm_worker():
     while True:
         msg = llm_queue.get()
@@ -56,14 +54,14 @@ def llm_worker():
         except:
             summaryJSON = {"type": "other", "text": summaryString}
 
-        insert_summary(
+        add_entity(
             type=summaryJSON["type"],
-            text=summaryJSON["text"],
+            content=summaryJSON["text"],
         )
         remove_status("Processing")
 
 
-# combine text, text queue -> llm queue
+# combine all of the text, text queue -> llm queue
 '''
 while True
     text = data from text queue (wait here if queue is empty)
@@ -72,8 +70,6 @@ while True
         send to llm queue for processing
         reset current message
 '''
-
-
 def create_text_chunks_worker():
     current_message = ""
 
@@ -88,11 +84,11 @@ def create_text_chunks_worker():
         # if message is over MESSAGE_CHUNK_SIZE, then send to llm
         if len(current_message) > MESSAGE_CHUNK_SIZE:
             llm_queue.put(current_message)
-            insert_speech(current_message)
+            add_entry(current_message)
             current_message = ""
 
 
-# transcribe using whisper, audio queue -> text queue
+# transcribe using whisper, audio queue -> text queue, this one runs every X seconds
 '''
 while True
     audio_np = data from transcription queue
@@ -100,8 +96,6 @@ while True
     IF text was detected
         add to text queue to be chunked
 '''
-
-
 def transcribe_audio_worker():
     while True:
         audio_np = transcription_queue.get()
@@ -142,14 +136,16 @@ def audio_worker():
 
 
 # method to summarize text using the LLM
-def summarize_llm(text):
+def summarize_llm(content):
 
     print("SUMMARIZING...")
+    
+    print(content)
 
     output = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": text}
+            {"role": "user", "content": content}
         ],
         temperature=0.2
     )

@@ -3,29 +3,29 @@ import './App.css'
 import { socket } from './socket';
 import { formatDate } from './helpers';
 
-interface speechData {
-  timestamp: string;
-  text: string;
+interface entryData {
+  created_at: string;
+  content: string;
   id: number;
   session_id: number;
 }
 
-interface summaryResponse {
+interface entityResponse {
   type: "todo" | "note";
-  data: summaryData[];
+  data: entityData[];
 }
 
-interface summaryData {
+interface entityData {
   id: number;
   type: string;
-  text: string;
-  timestamp: string;
+  content: string;
+  created_at: string;
   session_id: number;
 }
 
-interface allSummaries {
-  todo: summaryData[];
-  note: summaryData[];
+interface allEntities {
+  todo: entityData[];
+  note: entityData[];
 }
 
 interface appData {
@@ -39,26 +39,30 @@ function App() {
   const date = new Date();
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string[]>([]);
-  const [speech, setSpeech] = useState<speechData[]>([]);
-  const [summaries, setSummaries] = useState<allSummaries>();
+  const [entries, setEntries] = useState<entryData[]>([]);
+  const [summaries, setSummaries] = useState<allEntities>();
   const [appData, setAppData] = useState<appData>();
   const [inputValue, setInputValue] = useState('');
   const [micOn, setMicOn] = useState(false);
 
-  function deleteSummary(id: number) {
-    socket.emit("delete_summary", id)
+  function processEntries() {
+    socket.emit("process_entries", 10)
   }
 
-  function toggleMic(){
+  function deleteEntity(id: number) {
+    socket.emit("delete_entity", id)
+  }
+
+  function toggleMic() {
     setMicOn(!micOn);
     socket.emit("toggle_mic", micOn)
   }
 
-  function sendText(text: string) {
+  function sendEntry(text: string) {
     setInputValue("")
     if (text.replaceAll(" ", "") == "")
       return
-    socket.emit("written_text", text)
+    socket.emit("receive_entry", text)
   }
 
   useEffect(() => {
@@ -75,15 +79,15 @@ function App() {
       setStatus(data.status);
     }
 
-    function onAllSpeechData(data: speechData[]) {
-      setSpeech(data);
+    function onAllEntries(data: entryData[]) {
+      setEntries(data);
     }
 
-    function onAllSummaryData(data: summaryResponse) {
+    function onAllEntities(data: entityResponse) {
       setSummaries(prev => ({
         ...prev,
         [data.type]: data.data
-      } as allSummaries));
+      } as allEntities));
     }
 
     function onAppData(data: appData) {
@@ -97,16 +101,16 @@ function App() {
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('status', onStatusChange);
-    socket.on('all_speech', onAllSpeechData);
-    socket.on('all_summaries', onAllSummaryData);
+    socket.on('all_entries', onAllEntries);
+    socket.on('all_entities', onAllEntities);
     socket.on('app_data', onAppData);
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('status', onStatusChange);
-      socket.off('all_speech', onAllSpeechData);
-      socket.off('all_summaries', onAllSummaryData);
+      socket.off('all_entries', onAllEntries);
+      socket.off('all_entities', onAllEntities);
       socket.off('app_data', onAppData);
     };
   }, []);
@@ -124,37 +128,39 @@ function App() {
               <h3>Welcome</h3>
             </div>
             <div className="card-content" style={{ display: "flex", gap: "0.5rem" }}>
-              <button className='toggle-mic-btn' onClick={() => {toggleMic()}}>{micOn ? "Turn off Microphone" : "Turn on Microphone"}</button>
+              <button onClick={() => { toggleMic() }}>{micOn ? "Turn off Microphone" : "Turn on Microphone"}</button>
               <input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 className='message-input' type="text" placeholder='Type a message here' />
-              <button className='send-message-btn' onClick={() => sendText(inputValue)}>Send</button>
+              <button className='btn-accent' onClick={() => sendEntry(inputValue)}>Send</button>
             </div>
           </div>
           <div className="card">
             <div className="card-title">
-              <h3>Title</h3>
+              <h3>Actions</h3>
+            </div>
+            <div className="card-content" style={{ display: "flex", gap: "0.5rem" }}>
+              <button onClick={() => { processEntries() }}>Process</button>
             </div>
           </div>
         </div>
-        <div className="cols" style={{ gridTemplateColumns: "1fr 1fr 1fr", flexGrow: "1" }}>
+        <div className="cols" style={{ gridTemplateColumns: "1fr 1fr", flexGrow: "1" }}>
           <div className='card' >
             <div className="card-title">
               <h3>Reminders & To-do</h3>
             </div>
             <div className="card-content">
-              <div></div>
               {summaries && <div className="col" >
                 {summaries.todo.slice().reverse().map((item, index) => (
                   <div key={index} className="card" style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
                     <div style={{ paddingTop: "0.5rem", flexDirection: "column", display: "flex" }} >
                       <input type="checkbox" style={{ width: "1rem", height: "1rem", margin: 0 }} />
-                      <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteSummary(item.id)}>X</button>
+                      <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>X</button>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column" }}>
-                      <span>{formatDate(item.timestamp)}</span>
-                      <span>{item.text}</span>
+                      <span>{formatDate(item.created_at)}</span>
+                      <span>{item.content}</span>
                     </div>
                   </div>
                 ))}
@@ -168,32 +174,27 @@ function App() {
                 {summaries.note.slice().reverse().map((item, index) => (
                   <div key={index} className="card">
                     <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
-                      <span>{formatDate(item.timestamp)}</span>
-                      <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteSummary(item.id)}>X</button>
+                      <span>{formatDate(item.created_at)}</span>
+                      <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>X</button>
                     </div>
                     <div>
-                      <span>{item.text}</span>
+                      <span>{item.content}</span>
                     </div>
                   </div>
                 ))}
               </div>}
             </div>
           </div>
-          <div className="card">
-            <div className="card-title"><h3>
-              Other</h3></div>
-            <div className="card-content"></div>
-          </div>
         </div>
         <div className='card'  >
           <div className="card-title">
-            <h3>Speech</h3>
+            <h3>Entries</h3>
           </div>
           <div className="card-content">
             <div className="col">
-              {speech.slice().reverse().map((item, index) => (
+              {entries.slice().reverse().map((item, index) => (
                 <div key={index}>
-                  <span>{formatDate(item.timestamp)}<br />{item.text}</span>
+                  <span>{formatDate(item.created_at)}<br />{item.content}</span>
                 </div>
               ))}
             </div>

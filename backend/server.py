@@ -1,8 +1,9 @@
+import json
 import sqlite3
 import threading
 import socketio
 from werkzeug.serving import make_server
-from store import insert_summary, insert_speech
+from store import add_entity, add_entry, get_entries, add_entities
 
 DB_FILE = "data.db"
 PORT = 5500
@@ -10,7 +11,8 @@ PORT = 5500
 # create socketio server
 # threading mode works with blocking audio loop in another thread.
 # emitting from the audio thread is safe.
-sio = socketio.Server(cors_allowed_origins="*", async_mode="threading")
+sio = socketio.Server(cors_allowed_origins="*",
+                      async_mode="threading", logger=False, engineio_logger=False)
 app = socketio.WSGIApp(sio)
 
 current_status = []
@@ -48,9 +50,9 @@ def connect(sid, environ):
     with _status_lock:
         sio.emit("status", {"status": list(current_status)}, to=sid)
     send_app_data(sid)
-    send_all_speech(sid)
-    send_all_summaries(sid, "todo")
-    send_all_summaries(sid, "note")
+    send_all_entries(sid)
+    send_all_entities(sid, "todo")
+    send_all_entities(sid, "note")
 
 
 def send_app_data(sid):
@@ -62,38 +64,49 @@ def send_app_data(sid):
     sio.emit("app_data", data, to=sid)
 
 
-def send_all_speech(sid):
-    print("client request all speech data:", sid)
-    data = query_db("SELECT * FROM speech")
-    sio.emit("all_speech", data, to=sid)
+def send_all_entries(sid):
+    print("client request all entries:", sid)
+    data = query_db("SELECT * FROM entries")
+    sio.emit("all_entries", data, to=sid)
 
 
-def send_all_summaries(sid, type):
-    print("client request all summaries data:", sid)
+def send_all_entities(sid, type):
+    print("client request all entities data:", sid)
     if type:
-        query = f"SELECT * FROM summaries WHERE type = '{type}'"
+        query = f"SELECT * FROM entities WHERE type = '{type}'"
     else:
-        query = "SELECT * FROM summaries"
+        query = "SELECT * FROM entities"
 
     data = query_db(query)
 
-    sio.emit("all_summaries", {"type": type, "data": data}, to=sid)
+    sio.emit("all_entities", {"type": type, "data": data}, to=sid)
 
 
 @sio.event
-def delete_summary(sid, id):
-    print("deleting summary", id)
+def delete_entity(sid, id):
+    print("deleting entity", id)
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
-    cur.execute("DELETE FROM summaries WHERE id = ?", (id,))
+    cur.execute("DELETE FROM entities WHERE id = ?", (id,))
     conn.commit()
     conn.close()
     return {"deleted": id}
 
 
 @sio.event
-def written_text(sid, msg):
-    insert_speech(msg)
+def receive_entry(sid, msg):
+    add_entry(msg)
+
+
+@sio.event
+def process_entries(sid, num):
+    from workers import summarize_llm
+    add_status("Processing")
+    entries = get_entries(10)
+    summaryString = summarize_llm(entries).strip()
+    summaryJsonList = json.loads(summaryString)
+    add_entities(summaryJsonList)
+    remove_status("Processing")
 
 
 @sio.event
