@@ -69,6 +69,11 @@ def get_entries(limit=10):
 
 # generate a session id
 def create_session_id():
+    """
+    Generates a new session ID by retrieving the highest existing session_id from the entries table and incrementing it by 1.
+    Returns:
+        int: The next available session_id.
+    """
     conn = get_connection()
     cur = conn.cursor()
 

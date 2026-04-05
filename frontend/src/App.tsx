@@ -11,11 +11,11 @@ interface entryData {
 }
 
 interface entityResponse {
-  type: "todo" | "note";
+  type: EntityType;
   data: entityData[];
 }
 
-type EntityType = "todo" | "note";
+type EntityType = "todo" | "note" | "query_response";
 
 interface entityData {
   id: number;
@@ -43,7 +43,7 @@ function App() {
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string[]>([]);
   const [entries, setEntries] = useState<entryData[]>([]);
-  const [entities, setEntities] = useState<allEntities>({ todo: [], note: [] });
+  const [entities, setEntities] = useState<allEntities>({ todo: [], note: [], query_response: [] });
   const [appData, setAppData] = useState<appData>();
   const [inputValue, setInputValue] = useState('');
   const [micOn, setMicOn] = useState(false);
@@ -135,7 +135,6 @@ function App() {
       socket.off('update_entries', onUpdateEntries);
       socket.off('update_entities', onUpdateEntities);
       socket.offAny();
-
     };
   }, []);
 
@@ -212,7 +211,7 @@ function App() {
         </div>
         <div className='card'  >
           <div className="card-title">
-            <h3>Entries</h3>
+            <h3>Log</h3>
           </div>
           <div className="card-content">
             <div className="col">

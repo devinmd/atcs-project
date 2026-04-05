@@ -53,6 +53,7 @@ def connect(sid, environ):
     send_all_entries(sid)
     send_all_entities(sid, "todo")
     send_all_entities(sid, "note")
+    send_all_entities(sid, "query_response")
 
 
 def send_app_data(sid):
@@ -104,15 +105,19 @@ def process_entries(sid, num):
     add_status("Processing")
     entries = get_entries(10)
     summaryString = summarize_llm(entries).strip()
+    print(summaryString)
     summaryJsonList = json.loads(summaryString)
     add_entities(summaryJsonList)
     remove_status("Processing")
 
+
 def update_entries(entry):
     sio.emit("update_entries", entry)
-    
+
+
 def update_entities(entity):
     sio.emit("update_entities", entity)
+
 
 @sio.event
 def toggle_mic(sid, value):
