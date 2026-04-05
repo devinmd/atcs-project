@@ -108,6 +108,11 @@ def process_entries(sid, num):
     add_entities(summaryJsonList)
     remove_status("Processing")
 
+def update_entries(entry):
+    sio.emit("update_entries", entry)
+    
+def update_entities(entity):
+    sio.emit("update_entities", entity)
 
 @sio.event
 def toggle_mic(sid, value):

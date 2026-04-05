@@ -15,19 +15,22 @@ interface entityResponse {
   data: entityData[];
 }
 
+type EntityType = "todo" | "note";
+
 interface entityData {
   id: number;
-  type: string;
+  type: EntityType;
   content: string;
   created_at: string;
   session_id: number;
 }
 
-interface allEntities {
-  todo: entityData[];
-  note: entityData[];
+interface entityResponse {
+  type: EntityType;
+  data: entityData[];
 }
 
+type allEntities = Record<EntityType, entityData[]>;
 interface appData {
   version: string,
   microphone: string,
@@ -40,7 +43,7 @@ function App() {
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string[]>([]);
   const [entries, setEntries] = useState<entryData[]>([]);
-  const [summaries, setSummaries] = useState<allEntities>();
+  const [entities, setEntities] = useState<allEntities>({ todo: [], note: [] });
   const [appData, setAppData] = useState<appData>();
   const [inputValue, setInputValue] = useState('');
   const [micOn, setMicOn] = useState(false);
@@ -84,7 +87,7 @@ function App() {
     }
 
     function onAllEntities(data: entityResponse) {
-      setSummaries(prev => ({
+      setEntities(prev => ({
         ...prev,
         [data.type]: data.data
       } as allEntities));
@@ -92,6 +95,20 @@ function App() {
 
     function onAppData(data: appData) {
       setAppData(data);
+    }
+
+    function onUpdateEntries(data: entryData) {
+      setEntries(prev => [...prev, data]);
+    }
+
+    function onUpdateEntities(data: entityData) {
+      setEntities(prev => {
+        const key = data.type;
+        return {
+          ...prev,
+          [key]: [...prev[key], data]
+        };
+      });
     }
 
     socket.onAny((event, ...args) => {
@@ -104,6 +121,9 @@ function App() {
     socket.on('all_entries', onAllEntries);
     socket.on('all_entities', onAllEntities);
     socket.on('app_data', onAppData);
+    socket.on("update_entries", onUpdateEntries);
+    socket.on("update_entities", onUpdateEntities);
+
 
     return () => {
       socket.off('connect', onConnect);
@@ -112,6 +132,10 @@ function App() {
       socket.off('all_entries', onAllEntries);
       socket.off('all_entities', onAllEntities);
       socket.off('app_data', onAppData);
+      socket.off('update_entries', onUpdateEntries);
+      socket.off('update_entities', onUpdateEntities);
+      socket.offAny();
+
     };
   }, []);
 
@@ -151,8 +175,8 @@ function App() {
               <h3>Reminders & To-do</h3>
             </div>
             <div className="card-content">
-              {summaries && <div className="col" >
-                {summaries.todo.slice().reverse().map((item, index) => (
+              {entities && <div className="col" >
+                {entities.todo.slice().reverse().map((item, index) => (
                   <div key={index} className="card" style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
                     <div style={{ paddingTop: "0.5rem", flexDirection: "column", display: "flex" }} >
                       <input type="checkbox" style={{ width: "1rem", height: "1rem", margin: 0 }} />
@@ -170,8 +194,8 @@ function App() {
           <div className="card">
             <div className="card-title"><h3>Notes & Summaries</h3></div>
             <div className="card-content">
-              {summaries && <div className="col" >
-                {summaries.note.slice().reverse().map((item, index) => (
+              {entities && <div className="col" >
+                {entities.note.slice().reverse().map((item, index) => (
                   <div key={index} className="card">
                     <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
                       <span>{formatDate(item.created_at)}</span>
