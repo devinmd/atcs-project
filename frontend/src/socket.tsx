@@ -1,3 +1,5 @@
+// initialize socketio connection
+
 import { io } from 'socket.io-client';
 
 const URL = "localhost:5500"

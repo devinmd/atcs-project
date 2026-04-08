@@ -1,5 +1,6 @@
+
+// Convert the date string from the database (UTC) and convert it to a Date object in local time and then format into a string
 export function formatDate(dateString: string) {
-  // get string from database (UTC) and convert to Date object with conversion to local time
   const isoString = dateString.replace(" ", "T") + "Z";
   const date = new Date(isoString);
   const now = new Date();

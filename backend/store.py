@@ -57,14 +57,14 @@ def get_entries(limit=10):
 
     cur.execute("""
     SELECT content FROM entries
-    ORDER BY id ASC
+    ORDER BY id DESC
     LIMIT ?
     """, (limit,))
 
     rows = cur.fetchall()
     conn.close()
 
-    return [row[0] for row in rows]
+    return [row[0] for row in rows][::-1]
 
 
 # generate a session id
@@ -78,18 +78,15 @@ def create_session_id():
     cur = conn.cursor()
 
     cur.execute("""
-    SELECT id, content, created_at, session_id FROM entries
-    ORDER BY id DESC
-    LIMIT ?
-    """, (1,))
+    SELECT MAX(session_id) FROM entries
+    """)
 
     row = cur.fetchone()
-    session_id = row[3] if row else -1
+    max_session_id = row[0] if row and row[0] is not None else 0
 
-    conn.commit()
     conn.close()
 
-    return session_id+1
+    return max_session_id + 1
 
 
 session_id = create_session_id()

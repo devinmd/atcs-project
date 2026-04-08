@@ -84,7 +84,7 @@ def send_all_entities(sid, type):
 
 
 @sio.event
-def delete_entity(sid, id):
+def delete_entity(sid: str, id: int):
     print("deleting entity", id)
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
@@ -94,13 +94,25 @@ def delete_entity(sid, id):
     return {"deleted": id}
 
 
+# receive an entry and process it
 @sio.event
-def receive_entry(sid, msg):
+def receive_entry(sid: str, msg: str):
+    # process it automatically
+    from workers import summarize_llm
+    add_status("Processing")
+    entries = get_entries(5)
+    summaryString = summarize_llm(f"{{context: {entries}, new_entry_content: {msg}}}").strip()
+    print(summaryString)
+    summaryJsonList = json.loads(summaryString)
+    add_entities(summaryJsonList)
+    remove_status("Processing")
+    update_entities(summaryJsonList)
     add_entry(msg)
 
 
+#
 @sio.event
-def process_entries(sid, num):
+def process_entries(sid: str, num: int):
     from workers import summarize_llm
     add_status("Processing")
     entries = get_entries(10)
@@ -111,16 +123,18 @@ def process_entries(sid, num):
     remove_status("Processing")
 
 
+# send one entry that was added to the DB
 def update_entries(entry):
     sio.emit("update_entries", entry)
 
 
+# send one entity that was added to the DB
 def update_entities(entity):
     sio.emit("update_entities", entity)
 
 
 @sio.event
-def toggle_mic(sid, value):
+def toggle_mic(sid: str, value: bool):
     from workers import toggle_audio
     toggle_audio(value)
 

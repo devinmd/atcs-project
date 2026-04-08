@@ -78,14 +78,17 @@ function App() {
       setStatus([]);
     }
 
+    // status changes
     function onStatusChange(data: { status: string[] }) {
       setStatus(data.status);
     }
 
+    // receive all entries
     function onAllEntries(data: entryData[]) {
       setEntries(data);
     }
 
+    // receive all entities
     function onAllEntities(data: entityResponse) {
       setEntities(prev => ({
         ...prev,
@@ -93,14 +96,17 @@ function App() {
       } as allEntities));
     }
 
+    // receive app data
     function onAppData(data: appData) {
       setAppData(data);
     }
 
+    // add to entry list
     function onUpdateEntries(data: entryData) {
       setEntries(prev => [...prev, data]);
     }
 
+    // add to entity list
     function onUpdateEntities(data: entityData) {
       setEntities(prev => {
         const key = data.type;
@@ -123,7 +129,6 @@ function App() {
     socket.on('app_data', onAppData);
     socket.on("update_entries", onUpdateEntries);
     socket.on("update_entities", onUpdateEntities);
-
 
     return () => {
       socket.off('connect', onConnect);
@@ -148,15 +153,29 @@ function App() {
         <div className="cols" style={{ gridTemplateColumns: "1fr 1fr" }}>
           <div className='card'>
             <div className="card-title">
-              <h3>Welcome</h3>
+              <h3>Chat</h3>
             </div>
-            <div className="card-content" style={{ display: "flex", gap: "0.5rem" }}>
-              <button onClick={() => { toggleMic() }}>{micOn ? "Turn off Microphone" : "Turn on Microphone"}</button>
-              <input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className='message-input' type="text" placeholder='Type a message here' />
-              <button className='btn-accent' onClick={() => sendEntry(inputValue)}>Send</button>
+            <div className="card-content" style={{ display: "flex", gap: "0.5rem", flexDirection: "column", overflow:"hidden" }}>
+              {entities && <div className="col" style={{ overflow: "auto" }} >
+                {entities.query_response.slice().map((item, index) => (
+                  <div key={index} className="card">
+                    <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
+                      <span>{formatDate(item.created_at)}</span>
+                      <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>X</button>
+                    </div>
+                    <div>
+                      <span>{item.content}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>}
+              <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row" }}>
+                <input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  className='message-input' type="text" placeholder='Type a message here' />
+                <button className='btn-accent' onClick={() => sendEntry(inputValue)}>Send</button>
+              </div>
             </div>
           </div>
           <div className="card">
@@ -164,7 +183,8 @@ function App() {
               <h3>Actions</h3>
             </div>
             <div className="card-content" style={{ display: "flex", gap: "0.5rem" }}>
-              <button onClick={() => { processEntries() }}>Process</button>
+              <button onClick={() => { toggleMic() }}>{micOn ? "Turn off Microphone" : "Turn on Microphone"}</button>
+              {/* <button onClick={() => { processEntries() }}>Process</button> */}
             </div>
           </div>
         </div>
