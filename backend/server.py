@@ -96,18 +96,18 @@ def delete_entity(sid: str, id: int):
 
 # receive an entry and process it
 @sio.event
-def receive_entry(sid: str, msg: str):
+def receive_entry(sid: str, msg: str, type: str):
     # process it automatically
     from workers import summarize_llm
     add_status("Processing")
-    entries = get_entries(5)
+    entries = get_entries(10)
     summaryString = summarize_llm(f"{{context: {entries}, new_entry_content: {msg}}}").strip()
     print(summaryString)
     summaryJsonList = json.loads(summaryString)
     add_entities(summaryJsonList)
     remove_status("Processing")
     update_entities(summaryJsonList)
-    add_entry(msg)
+    add_entry(msg, type)
 
 
 #

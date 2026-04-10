@@ -84,7 +84,7 @@ def create_text_chunks_worker():
         # if message is over MESSAGE_CHUNK_SIZE, then send to llm
         if len(current_message) > MESSAGE_CHUNK_SIZE:
             llm_queue.put(current_message)
-            add_entry(current_message)
+            add_entry(current_message, "capture")
             current_message = ""
 
 

@@ -3,17 +3,17 @@ from db import get_connection
 
 
 # insert entry into the database
-def add_entry(content):
+def add_entry(content, type="capture"):
     from server import update_entries
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO entries (content, session_id)
-    VALUES (?, ?)
-    RETURNING id, content, session_id, created_at
-    """, (content, session_id))
+    INSERT INTO entries (content, session_id, type)
+    VALUES (?, ?, ?)
+    RETURNING id, content, session_id, created_at, type
+    """, (content, session_id, type))
 
     row = cur.fetchone()
 

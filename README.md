@@ -49,3 +49,15 @@ npm i
 3. Run `npm run dev` in `/frontend` to host the web interface
 
 4. Navigate to `localhost:PORT` in any web browser to access the web interface (PORT is whatever port # showed up in the console after running the frontend webserver)
+
+
+## Todo Checklist
+
+- [x] Host webserver for a backend
+- [x] Host webserver for frontned GUI
+- [x] Use faster-whisper instead of vosk
+- [x] Use websockets instead of http requests for the web GUI for decreased latncy and bidirectional communication
+- [x] Run listening, transcribing, and processing in separate threads to prevent blocking
+- [x] Send events from the backend to update the frontend when new data is received
+- [x] Delete items
+- [ ] Change how the processing works so it uses more context in order to do deeper analysis of the speech and what the user is trying to do

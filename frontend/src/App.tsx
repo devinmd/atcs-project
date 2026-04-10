@@ -61,11 +61,11 @@ function App() {
     socket.emit("toggle_mic", micOn)
   }
 
-  function sendEntry(text: string) {
+  function sendEntry(text: string, type: string) {
     setInputValue("")
     if (text.replaceAll(" ", "") == "")
       return
-    socket.emit("receive_entry", text)
+    socket.emit("receive_entry", text, type)
   }
 
   useEffect(() => {
@@ -155,7 +155,7 @@ function App() {
             <div className="card-title">
               <h3>Chat</h3>
             </div>
-            <div className="card-content" style={{ display: "flex", gap: "0.5rem", flexDirection: "column", overflow:"hidden" }}>
+            <div className="card-content" style={{ display: "flex", gap: "0.5rem", flexDirection: "column", overflow: "hidden" }}>
               {entities && <div className="col" style={{ overflow: "auto" }} >
                 {entities.query_response.slice().map((item, index) => (
                   <div key={index} className="card">
@@ -174,7 +174,8 @@ function App() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   className='message-input' type="text" placeholder='Type a message here' />
-                <button className='btn-accent' onClick={() => sendEntry(inputValue)}>Send</button>
+                <button className='btn-accent' onClick={() => sendEntry(inputValue, 'capture')}>Send</button>
+                <button className='btn-accent' onClick={() => sendEntry(inputValue, 'query')}>Ask</button>
               </div>
             </div>
           </div>

@@ -15,6 +15,7 @@ def initialize_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS entries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL
         content TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         session_id INTEGER
