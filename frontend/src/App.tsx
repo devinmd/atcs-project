@@ -10,12 +10,24 @@ interface entryData {
   session_id: number;
 }
 
+interface queryData {
+  created_at: string;
+  content: string;
+  id: number;
+  session_id: number;
+}
+
+interface queryResponse {
+  query: string;
+  response: string;
+}
+
 interface entityResponse {
   type: EntityType;
   data: entityData[];
 }
 
-type EntityType = "todo" | "note" | "query_response";
+type EntityType = "todo" | "note";
 
 interface entityData {
   id: number;
@@ -43,14 +55,13 @@ function App() {
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string[]>([]);
   const [entries, setEntries] = useState<entryData[]>([]);
-  const [entities, setEntities] = useState<allEntities>({ todo: [], note: [], query_response: [] });
+  const [queries, setQueries] = useState<queryData[]>([]);
+  const [queryResponses, setQueryResponses] = useState<queryResponse[]>([]);
+  const [entities, setEntities] = useState<allEntities>({ todo: [], note: [] });
   const [appData, setAppData] = useState<appData>();
-  const [inputValue, setInputValue] = useState('');
+  const [entryInputValue, setEntryInputValue] = useState('');
+  const [queryInputValue, setQueryInputValue] = useState('');
   const [micOn, setMicOn] = useState(false);
-
-  function processEntries() {
-    socket.emit("process_entries", 10)
-  }
 
   function deleteEntity(id: number) {
     socket.emit("delete_entity", id)
@@ -61,11 +72,18 @@ function App() {
     socket.emit("toggle_mic", micOn)
   }
 
-  function sendEntry(text: string, type: string) {
-    setInputValue("")
+  function sendEntry(text: string) {
+    setEntryInputValue("")
     if (text.replaceAll(" ", "") == "")
       return
-    socket.emit("receive_entry", text, type)
+    socket.emit("receive_entry", text)
+  }
+
+  function sendQuery(text: string) {
+    setQueryInputValue("")
+    if (text.replaceAll(" ", "") == "")
+      return
+    socket.emit("receive_query", text)
   }
 
   useEffect(() => {
@@ -88,6 +106,16 @@ function App() {
       setEntries(data);
     }
 
+    // receive all queries
+    function onAllQueries(data: queryData[]) {
+      setQueries(data);
+    }
+
+    // receive query response
+    function onQueryResponse(data: queryResponse) {
+      setQueryResponses(prev => [...prev, data]);
+    }
+
     // receive all entities
     function onAllEntities(data: entityResponse) {
       setEntities(prev => ({
@@ -106,13 +134,18 @@ function App() {
       setEntries(prev => [...prev, data]);
     }
 
+    // add to query list
+    function onUpdateQueries(data: queryData) {
+      setQueries(prev => [...prev, data]);
+    }
+
     // add to entity list
     function onUpdateEntities(data: entityData) {
       setEntities(prev => {
         const key = data.type;
         return {
           ...prev,
-          [key]: [...prev[key], data]
+          [key]: [...(prev[key] || []), data]
         };
       });
     }
@@ -125,9 +158,12 @@ function App() {
     socket.on('disconnect', onDisconnect);
     socket.on('status', onStatusChange);
     socket.on('all_entries', onAllEntries);
+    socket.on('all_queries', onAllQueries);
+    socket.on('query_response', onQueryResponse);
     socket.on('all_entities', onAllEntities);
     socket.on('app_data', onAppData);
     socket.on("update_entries", onUpdateEntries);
+    socket.on("update_queries", onUpdateQueries);
     socket.on("update_entities", onUpdateEntities);
 
     return () => {
@@ -135,9 +171,10 @@ function App() {
       socket.off('disconnect', onDisconnect);
       socket.off('status', onStatusChange);
       socket.off('all_entries', onAllEntries);
-      socket.off('all_entities', onAllEntities);
+      socket.off('all_queries', onAllQueries); socket.off('query_response', onQueryResponse); socket.off('all_entities', onAllEntities);
       socket.off('app_data', onAppData);
       socket.off('update_entries', onUpdateEntries);
+      socket.off('update_queries', onUpdateQueries);
       socket.off('update_entities', onUpdateEntities);
       socket.offAny();
     };
@@ -155,27 +192,30 @@ function App() {
             <div className="card-title">
               <h3>Chat</h3>
             </div>
-            <div className="card-content" style={{ display: "flex", gap: "0.5rem", flexDirection: "column", overflow: "hidden" }}>
-              {entities && <div className="col" style={{ overflow: "auto" }} >
-                {entities.query_response.slice().map((item, index) => (
-                  <div key={index} className="card">
-                    <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
-                      <span>{formatDate(item.created_at)}</span>
-                      <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>X</button>
-                    </div>
-                    <div>
-                      <span>{item.content}</span>
-                    </div>
+            <div className="card-content" style={{ display: "flex", gap: "1rem", flexDirection: "column", overflow: "hidden" }}>
+              {queryResponses && <div className="col" style={{ overflow: "auto" }} >
+                {queryResponses.slice().map((item, index) => (
+                  <div key={index} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <span style={{ backgroundColor: "var(--bg-l1)", padding: "0.25rem 0.5rem", borderRadius: "0.5rem" }} > {item.query} </span>
+                    <span > {item.response} </span>
                   </div>
                 ))}
               </div>}
-              <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row" }}>
-                <input
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  className='message-input' type="text" placeholder='Type a message here' />
-                <button className='btn-accent' onClick={() => sendEntry(inputValue, 'capture')}>Send</button>
-                <button className='btn-accent' onClick={() => sendEntry(inputValue, 'query')}>Ask</button>
+              <div style={{ display: "flex", gap: "0.5rem", flexDirection: "column" }}>
+                <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row" }}>
+                  <input
+                    value={entryInputValue}
+                    onChange={(e) => setEntryInputValue(e.target.value)}
+                    className='message-input' type="text" placeholder='Add context/data' />
+                  <button className='btn-accent' onClick={() => sendEntry(entryInputValue)}>Add Entry</button>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row" }}>
+                  <input
+                    value={queryInputValue}
+                    onChange={(e) => setQueryInputValue(e.target.value)}
+                    className='message-input' type="text" placeholder='Ask the LLM' />
+                  <button className='btn-accent' onClick={() => sendQuery(queryInputValue)}>Ask</button>
+                </div>
               </div>
             </div>
           </div>

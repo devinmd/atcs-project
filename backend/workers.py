@@ -14,11 +14,18 @@ transcription_queue = queue.Queue()
 text_queue = queue.Queue()
 llm_queue = queue.Queue()
 
-
 audio_on = threading.Event()
 
 
 def toggle_audio(on):
+    '''
+    if ON is true:
+        set the audio_on event
+        add "Listening" status
+    else:
+      clear the audio_on event
+      remove "Listening" status
+    '''
     print(on)
     if on:
         audio_on.set()
@@ -29,24 +36,24 @@ def toggle_audio(on):
 
 
 # make the llm summaries, llm queue -> database
-'''
-while True
-    msg = item from llm queue (wait here if queue is empty)
-    summaryString = run llm on msg
-    TRY
-        parse json
-    EXCEPT error
-        fallback to a different json object
-    store summary in database
-'''
 def llm_worker():
+    '''
+    while True
+        msg = item from llm queue (wait here if queue is empty)
+        summaryString = run llm on msg
+        TRY
+            parse json
+        EXCEPT error
+            fallback to a different json object
+        store summary in database
+    '''
     while True:
         msg = llm_queue.get()
 
         print('SUMMARIZING')
         add_status("Processing")
 
-        summaryString = summarize_llm(msg).strip()
+        summaryString = process_entry(msg).strip()
         print(summaryString)
 
         try:
@@ -62,15 +69,15 @@ def llm_worker():
 
 
 # combine all of the text, text queue -> llm queue
-'''
-while True
-    text = data from text queue (wait here if queue is empty)
-    add to current message string
-    IF message length > MESSAGE_CHUNK_SIZE
-        send to llm queue for processing
-        reset current message
-'''
 def create_text_chunks_worker():
+    '''
+    while True
+        text = data from text queue (wait here if queue is empty)
+        add to current message string
+        IF message length > MESSAGE_CHUNK_SIZE
+            send to llm queue for processing
+            reset current message
+    '''
     current_message = ""
 
     while True:
@@ -89,14 +96,14 @@ def create_text_chunks_worker():
 
 
 # transcribe using whisper, audio queue -> text queue, this one runs every X seconds
-'''
-while True
-    audio_np = data from transcription queue
-    segments = data from whisper transcription
-    IF text was detected
-        add to text queue to be chunked
-'''
 def transcribe_audio_worker():
+    '''
+    while True
+        audio_np = data from transcription queue
+        segments = data from whisper transcription
+        IF text was detected
+            add to text queue to be chunked
+    '''
     while True:
         audio_np = transcription_queue.get()
 
@@ -120,6 +127,16 @@ def transcribe_audio_worker():
 
 # combine audio chunks, audio samples -> audio queue
 def audio_worker():
+    '''
+    initialize empty audio_data list and samples_collected counter
+    calculate target_samples as SAMPLE_RATE * CHUNK_DURATION
+    while samples_collected < target_samples:
+        get a chunk from audio_queue
+        append chunk to audio_data
+        add chunk length to samples_collected
+    concatenate audio_data into a numpy array and flatten
+    [ut the audio_np into transcription_queue
+    '''
     while True:
         audio_data = []
         samples_collected = 0
@@ -135,12 +152,16 @@ def audio_worker():
         transcription_queue.put(audio_np)
 
 
-# method to summarize text using the LLM
-def summarize_llm(content):
+# method to process entry text using the LLM
+def process_entry(content):
+    '''
+    create a chat completion with system prompt and user content
+    return the LLM response content
+    '''
 
-    print("SUMMARIZING...")
-    
+    print("PROCESSING ENTRY...")
     print(content)
+    add_status("Processing")
 
     output = llm.create_chat_completion(
         messages=[
@@ -148,5 +169,26 @@ def summarize_llm(content):
             {"role": "user", "content": content}
         ],
         temperature=0.2
+    )
+    remove_status("Processing")
+    return (output['choices'][0]['message']['content'])
+
+
+# method to query the LLM
+def query_llm(content):
+    '''
+    create a chat completion with assistant system prompt and user content
+    return the LLM response content
+    '''
+
+    print("QUERYING LLM...")
+    print(content)
+
+    output = llm.create_chat_completion(
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant. Answer the user's query based on the provided context."},
+            {"role": "user", "content": content}
+        ],
+        temperature=0.7
     )
     return (output['choices'][0]['message']['content'])

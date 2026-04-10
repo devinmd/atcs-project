@@ -3,17 +3,17 @@ from db import get_connection
 
 
 # insert entry into the database
-def add_entry(content, type="capture"):
+def add_entry(content):
     from server import update_entries
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO entries (content, session_id, type)
-    VALUES (?, ?, ?)
-    RETURNING id, content, session_id, created_at, type
-    """, (content, session_id, type))
+    INSERT INTO entries (content, session_id)
+    VALUES (?, ?)
+    RETURNING id, content, session_id, created_at
+    """, (content, session_id))
 
     row = cur.fetchone()
 
@@ -21,6 +21,27 @@ def add_entry(content, type="capture"):
     conn.close()
 
     update_entries(dict(row))
+
+
+# insert query into the database
+def add_query(content):
+    from server import update_queries
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    cur.execute("""
+    INSERT INTO queries (content, session_id)
+    VALUES (?, ?)
+    RETURNING id, content, session_id, created_at
+    """, (content, session_id))
+
+    row = cur.fetchone()
+
+    conn.commit()
+    conn.close()
+
+    update_queries(dict(row))
 
 
 # insert entity into the database

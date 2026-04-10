@@ -3,7 +3,7 @@ import sqlite3
 import threading
 import socketio
 from werkzeug.serving import make_server
-from store import add_entity, add_entry, get_entries, add_entities
+from store import add_entity, add_entry, get_entries, add_entities, add_query
 
 DB_FILE = "data.db"
 PORT = 5500
@@ -51,9 +51,9 @@ def connect(sid, environ):
         sio.emit("status", {"status": list(current_status)}, to=sid)
     send_app_data(sid)
     send_all_entries(sid)
+    send_all_queries(sid)
     send_all_entities(sid, "todo")
     send_all_entities(sid, "note")
-    send_all_entities(sid, "query_response")
 
 
 def send_app_data(sid):
@@ -69,6 +69,12 @@ def send_all_entries(sid):
     print("client request all entries:", sid)
     data = query_db("SELECT * FROM entries")
     sio.emit("all_entries", data, to=sid)
+
+
+def send_all_queries(sid):
+    print("client request all queries:", sid)
+    data = query_db("SELECT * FROM queries")
+    sio.emit("all_queries", data, to=sid)
 
 
 def send_all_entities(sid, type):
@@ -96,27 +102,44 @@ def delete_entity(sid: str, id: int):
 
 # receive an entry and process it
 @sio.event
-def receive_entry(sid: str, msg: str, type: str):
-    # process it automatically
-    from workers import summarize_llm
-    add_status("Processing")
-    entries = get_entries(10)
-    summaryString = summarize_llm(f"{{context: {entries}, new_entry_content: {msg}}}").strip()
+def receive_entry(sid: str, msg: str):
+    '''
+    receive an entry from the frontend
+    send to llm for processing
+    parse as json
+    add entry to db
+    add processed entity to db
+    '''
+    from workers import process_entry
+    summaryString = process_entry(f"{msg}").strip()
     print(summaryString)
     summaryJsonList = json.loads(summaryString)
     add_entities(summaryJsonList)
-    remove_status("Processing")
     update_entities(summaryJsonList)
-    add_entry(msg, type)
+    add_entry(msg)
+
+
+# receive a query and process it
+@sio.event
+def receive_query(sid: str, msg: str):
+    from workers import query_llm
+    add_status("Querying")
+    # perhaps get some context from entries
+    entries = get_entries(10)
+    response = query_llm(f"Context: {entries}\nQuery: {msg}")
+    # emit response directly to frontend
+    sio.emit("query_response", {"query": msg, "response": response}, to=sid)
+    remove_status("Querying")
+    add_query(msg)
 
 
 #
 @sio.event
 def process_entries(sid: str, num: int):
-    from workers import summarize_llm
+    from workers import process_entry
     add_status("Processing")
     entries = get_entries(10)
-    summaryString = summarize_llm(entries).strip()
+    summaryString = process_entry(entries).strip()
     print(summaryString)
     summaryJsonList = json.loads(summaryString)
     add_entities(summaryJsonList)
@@ -126,6 +149,11 @@ def process_entries(sid: str, num: int):
 # send one entry that was added to the DB
 def update_entries(entry):
     sio.emit("update_entries", entry)
+
+
+# send one query that was added to the DB
+def update_queries(query):
+    sio.emit("update_queries", query)
 
 
 # send one entity that was added to the DB
