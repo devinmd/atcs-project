@@ -38,6 +38,11 @@ def toggle_audio(on):
 # make the llm summaries, llm queue -> database
 def llm_worker():
     '''
+    Preconditions:
+    - llm_queue is initialized and may contain messages
+    - database connection is established for storing entities
+
+    Pseudocode:
     while True
         msg = item from llm queue (wait here if queue is empty)
         summaryString = run llm on msg
@@ -46,6 +51,10 @@ def llm_worker():
         EXCEPT error
             fallback to a different json object
         store summary in database
+
+    Postconditions:
+    - All messages from llm_queue are processed
+    - Entities are added to the database based on LLM output
     '''
     while True:
         msg = llm_queue.get()
@@ -59,11 +68,11 @@ def llm_worker():
         try:
             summaryJSON = json.loads(summaryString)
         except:
-            summaryJSON = {"type": "other", "text": summaryString}
+            summaryJSON = {"type": "note", "content": summaryString}
 
         add_entity(
-            type=summaryJSON["type"],
-            content=summaryJSON["text"],
+            type=summaryJSON.get("type", "note"),
+            content=summaryJSON.get("content", summaryString),
         )
         remove_status("Processing")
 
@@ -71,12 +80,22 @@ def llm_worker():
 # combine all of the text, text queue -> llm queue
 def create_text_chunks_worker():
     '''
+    Preconditions:
+    - text_queue is initialized and may contain text strings
+
+    Pseudocode:
     while True
         text = data from text queue (wait here if queue is empty)
         add to current message string
         IF message length > MESSAGE_CHUNK_SIZE
             send to llm queue for processing
             reset current message
+
+    Postconditions:
+    - text from text_queue is accumulated into chunks
+    - chunks exceeding MESSAGE_CHUNK_SIZE are sent to llm_queue
+    - each chunk is logged as an entry with type "capture"
+    - function runs indefinitely, processing text as it arrives in the queue
     '''
     current_message = ""
 
@@ -98,11 +117,22 @@ def create_text_chunks_worker():
 # transcribe using whisper, audio queue -> text queue, this one runs every X seconds
 def transcribe_audio_worker():
     '''
+    Preconditions:
+    - transcription_queue is initialized and contains audio numpy arrays
+    - whisper model is initialized
+    - text_queue is initialized for output
+
+    Pseudocode:
     while True
         audio_np = data from transcription queue
         segments = data from whisper transcription
         IF text was detected
             add to text queue to be chunked
+
+    Postconditions:
+    - audio from transcription_queue is transcribed to text
+    - non empty transcribed text is added to text_queue
+    - function runs indefinitely, processing audio as it arrives in queue
     '''
     while True:
         audio_np = transcription_queue.get()
@@ -128,6 +158,10 @@ def transcribe_audio_worker():
 # combine audio chunks, audio samples -> audio queue
 def audio_worker():
     '''
+    Preconditions:
+    - audio_queue is initialized and contains audio chunks (numpy arrays)
+
+    Pseudocode:
     initialize empty audio_data list and samples_collected counter
     calculate target_samples as SAMPLE_RATE * CHUNK_DURATION
     while samples_collected < target_samples:
@@ -135,7 +169,13 @@ def audio_worker():
         append chunk to audio_data
         add chunk length to samples_collected
     concatenate audio_data into a numpy array and flatten
-    [ut the audio_np into transcription_queue
+    put the audio_np into transcription_queue
+
+    Postconditions:
+    - audio chunks from audio_queue are collected until target_samples is reached
+    - collected chunks are concatenated into a single numpy array
+    - the audio array is placed in transcription_queue
+    - function runs indefinitely, processing audio chunks as they arrive in queue
     '''
     while True:
         audio_data = []
@@ -155,8 +195,17 @@ def audio_worker():
 # method to process entry text using the LLM
 def process_entry(content):
     '''
+    Preconditions:
+    - llm model is loaded
+    - content is a non-empty string
+
+    Pseudocode:
     create a chat completion with system prompt and user content
     return the LLM response content
+
+    Postconditions:
+    - LLM is called with the provided content and system prompt
+    - Returns the content of the LLM response message
     '''
 
     print("PROCESSING ENTRY...")
@@ -177,8 +226,17 @@ def process_entry(content):
 # method to query the LLM
 def query_llm(content):
     '''
+    Preconditions:
+    - llm is loaded
+    - content is a non-empty string containing query and context
+
+    Pseudocode:
     create a chat completion with assistant system prompt and user content
     return the LLM response content
+
+    Postconditions:
+    - LLM is called with the provided content
+    - Returns the content of the LLM's response message
     '''
 
     print("QUERYING LLM...")

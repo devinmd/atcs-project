@@ -37,11 +37,6 @@ interface entityData {
   session_id: number;
 }
 
-interface entityResponse {
-  type: EntityType;
-  data: entityData[];
-}
-
 type allEntities = Record<EntityType, entityData[]>;
 interface appData {
   version: string,
@@ -68,22 +63,23 @@ function App() {
   }
 
   function toggleMic() {
-    setMicOn(!micOn);
-    socket.emit("toggle_mic", micOn)
+    const nextValue = !micOn;
+    setMicOn(nextValue);
+    socket.emit("toggle_mic", nextValue);
   }
 
   function sendEntry(text: string) {
-    setEntryInputValue("")
-    if (text.replaceAll(" ", "") == "")
-      return
-    socket.emit("receive_entry", text)
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setEntryInputValue("");
+    socket.emit("receive_entry", trimmed);
   }
 
   function sendQuery(text: string) {
-    setQueryInputValue("")
-    if (text.replaceAll(" ", "") == "")
-      return
-    socket.emit("receive_query", text)
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setQueryInputValue("");
+    socket.emit("receive_query", trimmed);
   }
 
   useEffect(() => {

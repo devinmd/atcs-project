@@ -122,6 +122,12 @@ def receive_entry(sid: str, msg: str):
 # receive a query and process it
 @sio.event
 def receive_query(sid: str, msg: str):
+    '''
+    get latest 10 entries to use as context
+    query the llm with the context and query message
+    emit the response to the connected websocket
+    '''
+  
     from workers import query_llm
     add_status("Querying")
     # perhaps get some context from entries

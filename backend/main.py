@@ -34,6 +34,13 @@ print("INITIALIZED")
 
 
 def audio_loop():
+    '''
+    while true:
+        wait for audio to be turned on by user
+        open microphone audio input stream
+        collect audio callbacks
+        
+    '''
     while True:
 
         audio_on.wait()

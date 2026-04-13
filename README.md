@@ -20,9 +20,9 @@ MacOS
 curl -LsSf https://hf.co/cli/install.sh | bash
 ```
 
-### Install Llama model .gguf in `/backend`
+### Install Model .gguf in `/backend` using Hugging Face
 
-Llama 3.2 8B Instruct IQ4 XS (4 GB)
+Llama 3.2 8B Instruct IQ4 XS (~4 GB)
 
 ```shell
 hf download mradermacher/Llama-3.2-8B-Instruct-GGUF \
@@ -30,7 +30,7 @@ hf download mradermacher/Llama-3.2-8B-Instruct-GGUF \
   --local-dir models/llama3.2
 ```
 
-The less quantized versions of Llama 3.2 8B Instruct take far too long to generate responses. Llama 3.2 1B Instruct is faster does not work due to its low accuracy.
+The less quantized versions of Llama 3.2 8B Instruct take far too long to generate responses. Llama 3.2 1B Instruct is faster but does not work well due to its low accuracy.
 
 ### Install node modules in `/frontend`
 
@@ -60,4 +60,5 @@ npm i
 - [x] Run listening, transcribing, and processing in separate threads to prevent blocking
 - [x] Send events from the backend to update the frontend when new data is received
 - [x] Delete items
-- [ ] Change how the processing works so it uses more context in order to do deeper analysis of the speech and what the user is trying to do
+- [x] query llm about entries in the database in a chat interface
+- [ ] remove queries from database? storing them is unecessary unless we store answers as well

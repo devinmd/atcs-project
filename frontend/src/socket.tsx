@@ -2,6 +2,6 @@
 
 import { io } from 'socket.io-client';
 
-const URL = "localhost:5500"
+const URL = "http://localhost:5500";
 
 export const socket = io(URL);
