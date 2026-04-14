@@ -124,7 +124,8 @@ def receive_entry(sid: str, msg: str):
 @sio.event
 def receive_query(sid: str, msg: str):
     '''
-    get latest 10 entries to use as context
+    get all entities
+    find relevant entities to use as context using the embeddings
     query the llm with the context and query message
     emit the response to the connected websocket
     '''
