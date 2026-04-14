@@ -17,3 +17,7 @@ Do not use the context to generate new items, only to support the new entry data
 
 #
 MESSAGE_CHUNK_SIZE = 100
+
+#
+DB_FILE = "data.db"
+PORT = 5500

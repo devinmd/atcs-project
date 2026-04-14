@@ -4,16 +4,16 @@ import { socket } from './socket';
 import { formatDate } from './helpers';
 
 interface entryData {
-  created_at: string;
-  content: string;
   id: number;
+  content: string;
+  created_at: string;
   session_id: number;
 }
 
 interface queryData {
-  created_at: string;
-  content: string;
   id: number;
+  content: string;
+  created_at: string;
   session_id: number;
 }
 
@@ -33,6 +33,8 @@ interface entityData {
   id: number;
   type: EntityType;
   content: string;
+  status: string;
+  date: string;
   created_at: string;
   session_id: number;
 }
@@ -203,14 +205,14 @@ function App() {
                     value={entryInputValue}
                     onChange={(e) => setEntryInputValue(e.target.value)}
                     className='message-input' type="text" placeholder='Add context/data' />
-                  <button className='btn-accent' onClick={() => sendEntry(entryInputValue)}>Add Entry</button>
+                  <button className='btn-accent' onClick={() => sendEntry(entryInputValue)}>Capture Entry</button>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row" }}>
                   <input
                     value={queryInputValue}
                     onChange={(e) => setQueryInputValue(e.target.value)}
                     className='message-input' type="text" placeholder='Ask the LLM' />
-                  <button className='btn-accent' onClick={() => sendQuery(queryInputValue)}>Ask</button>
+                  <button className='btn-accent' onClick={() => sendQuery(queryInputValue)}>Query</button>
                 </div>
               </div>
             </div>

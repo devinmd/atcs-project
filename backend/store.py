@@ -12,7 +12,7 @@ def add_entry(content):
     cur.execute("""
     INSERT INTO entries (content, session_id)
     VALUES (?, ?)
-    RETURNING id, content, session_id, created_at
+    RETURNING id, content, created_at, session_id
     """, (content, session_id))
 
     row = cur.fetchone()
@@ -33,7 +33,7 @@ def add_query(content):
     cur.execute("""
     INSERT INTO queries (content, session_id)
     VALUES (?, ?)
-    RETURNING id, content, session_id, created_at
+    RETURNING id, content, created_at, session_id
     """, (content, session_id))
 
     row = cur.fetchone()
@@ -45,17 +45,17 @@ def add_query(content):
 
 
 # insert entity into the database
-def add_entity(content="", type="", status="", date=""):
+def add_entity(content="", type="", status="", date="", embed_bytes=None):
     from server import update_entities
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO entities (type, content, status, date, session_id)
-    VALUES (?, ?, ?, ?, ?)
-    RETURNING id, type, content, status, date, session_id, created_at
-    """, (type, content, status, date, session_id))
+    INSERT INTO entities (type, content, status, date, session_id, embedding)
+    VALUES (?, ?, ?, ?, ?, ?)
+    RETURNING id, type, content, status, date, created_at, session_id
+    """, (type, content, status, date, session_id, sqlite3.Binary(embed_bytes) if embed_bytes is not None else None))
 
     row = cur.fetchone()
 
@@ -66,9 +66,9 @@ def add_entity(content="", type="", status="", date=""):
 
 
 # helper to add multiple entities
-def add_entities(data):
+def add_entities(data, embed_bytes=None):
     for i in data:
-        add_entity(i["content"], i["type"], i["status"], i["date"])
+        add_entity(i["content"], i["type"], i["status"], i["date"], embed_bytes=embed_bytes)
 
 
 # returns a list of the last X entries' content

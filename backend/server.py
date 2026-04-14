@@ -2,11 +2,9 @@ import json
 import sqlite3
 import threading
 import socketio
+from config import *
 from werkzeug.serving import make_server
 from store import add_entity, add_entry, get_entries, add_entities, add_query
-
-DB_FILE = "data.db"
-PORT = 5500
 
 # create socketio server
 # threading mode works with blocking audio loop in another thread.
@@ -67,22 +65,22 @@ def send_app_data(sid):
 
 def send_all_entries(sid):
     print("client request all entries:", sid)
-    data = query_db("SELECT * FROM entries")
+    data = query_db("SELECT id, content, created_at, session_id FROM entries")
     sio.emit("all_entries", data, to=sid)
 
 
 def send_all_queries(sid):
     print("client request all queries:", sid)
-    data = query_db("SELECT * FROM queries")
+    data = query_db("SELECT id, content, created_at, session_id FROM queries")
     sio.emit("all_queries", data, to=sid)
 
 
 def send_all_entities(sid, type):
     print("client request all entities data:", sid)
     if type:
-        query = f"SELECT * FROM entities WHERE type = '{type}'"
+        query = f"SELECT id, type, content, status, date, created_at, session_id FROM entities WHERE type = '{type}'"
     else:
-        query = "SELECT * FROM entities"
+        query = "SELECT id, type, content, status, date, created_at, session_id FROM entities"
 
     data = query_db(query)
 
@@ -110,12 +108,15 @@ def receive_entry(sid: str, msg: str):
     add entry to db
     add processed entity to db
     '''
-    from workers import process_entry
-    summaryString = process_entry(f"{msg}").strip()
-    print(summaryString)
-    summaryJsonList = json.loads(summaryString)
-    add_entities(summaryJsonList)
-    update_entities(summaryJsonList)
+    from workers import process_entry, embed_text
+    entityString = process_entry(f"{msg}").strip()  # generate string
+    entityJsonList = json.loads(entityString)  # parse as json
+
+    embedding = embed_text(entityString)
+    embedding_bytes = embedding.tobytes()
+    add_entities(entityJsonList, embedding_bytes)  # add to db
+    update_entities(entityJsonList)  # send to frontend
+
     add_entry(msg)
 
 
@@ -127,29 +128,19 @@ def receive_query(sid: str, msg: str):
     query the llm with the context and query message
     emit the response to the connected websocket
     '''
-  
-    from workers import query_llm
+
+    from workers import query_llm, find_relevant_entities, get_all_entities
     add_status("Querying")
+    
+    all_entities = get_all_entities()
+    relevant_entities = find_relevant_entities(msg, 5, all_entities)
+    
     # perhaps get some context from entries
-    entries = get_entries(10)
-    response = query_llm(f"Context: {entries}\nQuery: {msg}")
+    response = query_llm(f"Context: {relevant_entities}\nQuery: {msg}")
     # emit response directly to frontend
     sio.emit("query_response", {"query": msg, "response": response}, to=sid)
     remove_status("Querying")
     add_query(msg)
-
-
-#
-@sio.event
-def process_entries(sid: str, num: int):
-    from workers import process_entry
-    add_status("Processing")
-    entries = get_entries(10)
-    summaryString = process_entry(entries).strip()
-    print(summaryString)
-    summaryJsonList = json.loads(summaryString)
-    add_entities(summaryJsonList)
-    remove_status("Processing")
 
 
 # send one entry that was added to the DB

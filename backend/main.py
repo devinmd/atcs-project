@@ -7,10 +7,13 @@ import sys
 from server import start_socket_server
 from config import *
 from workers import *
+from sentence_transformers import SentenceTransformer
 
+
+embedModel = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 # load whisper model
-model = WhisperModel(MODEL_SIZE, compute_type=COMPUTE_TYPE)
+whisperModel = WhisperModel(MODEL_SIZE, compute_type=COMPUTE_TYPE)
 
 
 # initialize the LLM

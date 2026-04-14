@@ -1,10 +1,12 @@
+import sqlite3
 import json
 import numpy as np
 import queue
 from config import *
-from main import model, llm
+from main import whisperModel, llm, embedModel
 from store import add_entity, add_entry
 from server import add_status, remove_status
+from sentence_transformers import util
 
 import threading
 
@@ -94,7 +96,6 @@ def create_text_chunks_worker():
     Postconditions:
     - text from text_queue is accumulated into chunks
     - chunks exceeding MESSAGE_CHUNK_SIZE are sent to llm_queue
-    - each chunk is logged as an entry with type "capture"
     - function runs indefinitely, processing text as it arrives in the queue
     '''
     current_message = ""
@@ -110,7 +111,7 @@ def create_text_chunks_worker():
         # if message is over MESSAGE_CHUNK_SIZE, then send to llm
         if len(current_message) > MESSAGE_CHUNK_SIZE:
             llm_queue.put(current_message)
-            add_entry(current_message, "capture")
+            add_entry(current_message)
             current_message = ""
 
 
@@ -140,7 +141,7 @@ def transcribe_audio_worker():
         print('TRANSCRIBING')
         add_status("Transcribing")
 
-        segments, info = model.transcribe(
+        segments, info = whisperModel.transcribe(
             audio_np,
             beam_size=BEAM_SIZE,
             language="en",
@@ -250,3 +251,44 @@ def query_llm(content):
         temperature=0.7
     )
     return (output['choices'][0]['message']['content'])
+
+
+# method to embed text
+def embed_text(text):
+  embedding = embedModel.encode(text)
+  print(embedding.shape)
+  return(embedding)
+
+
+def get_all_entities():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT id, content, type, date, embedding FROM entities")
+    rows = cur.fetchall()
+    entities = []
+    for row in rows:
+        entities.append({
+            "id": row[0],
+            "content": row[1], 
+            "type": row[2],
+            "date": row[3],
+            "embedding": np.frombuffer(row[4], dtype=np.float32)  # convert from stored bytes
+        })
+    return entities
+  
+  
+def find_relevant_entities(query, num, entities):
+  
+    query_embedding = embed_text(query)
+    entity_embeddings = np.array([e["embedding"] for e in entities])
+  
+    scores = util.cos_sim(query_embedding, entity_embeddings)[0]
+    top_indices = scores.topk(min(num,len(entities))).indices
+
+    relevant_entities = [entities[i] for i in top_indices]
+    for e in relevant_entities:
+        e.pop("embedding", None)
+    print(relevant_entities)
+    return(relevant_entities)
+    
