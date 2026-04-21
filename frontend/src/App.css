@@ -51,6 +51,7 @@ input.message-input {
   font-size: 1rem;
   flex-grow: 1;
   font-size: 0.875rem;
+  font-weight:400;
   transition: 100ms;
 }
 
@@ -65,7 +66,7 @@ button {
   border-radius: 0.5rem;
   color: var(--text-color);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight:500;
   margin-top: auto;
   cursor: pointer;
   padding: 0 1rem;
@@ -80,10 +81,10 @@ button:hover {
 }
 
 button.btn-accent {
-  background-color: #2d76ff60;
+  background-color: #4d8bff80;
 }
 button.btn-accent:hover {
-  background-color: #2d76ff;
+  background-color: #4d8bff;
 }
 
 .main .cols {
@@ -135,7 +136,7 @@ button.btn-accent:hover {
 
 .success,
 .online {
-  color: #15ff53;
+  color: #13995d;
 }
 .error,
 .not-connected,

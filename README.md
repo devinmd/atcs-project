@@ -50,10 +50,10 @@ npm i
 
 4. Navigate to `localhost:PORT` in any web browser to access the web interface (PORT is whatever port # showed up in the console after running the frontend webserver)
 
-
 ## Data Pipeline
 
 ### Data entry
+
 1. Entry (Speech or text, speech is transcribed)
 2. Converted to an entity (formatted data with deadlines, status, etc. extracted) using a local LLM
 3. Entity is embedded using sentence-transformer
@@ -61,12 +61,12 @@ npm i
 5. Entry and Entity are displayed on the frontend
 
 ### Querying
+
 1. User sends a query
 2. Query is embedded using sentence-transformer
 3. Top relevant entities are found using the embeddings and cosine similiarity
 4. Relevant entities & query are passed to the local LLM to generate an answer
 5. Query and answer are displayed on the frontend
-
 
 ## Todo Checklist
 

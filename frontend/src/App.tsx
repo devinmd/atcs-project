@@ -212,7 +212,7 @@ function App() {
                     value={queryInputValue}
                     onChange={(e) => setQueryInputValue(e.target.value)}
                     className='message-input' type="text" placeholder='Ask the LLM' />
-                  <button className='btn-accent' onClick={() => sendQuery(queryInputValue)}>Query</button>
+                  <button className='btn-accent' onClick={() => sendQuery(queryInputValue)}>Ask Query</button>
                 </div>
               </div>
             </div>
