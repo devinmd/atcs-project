@@ -42,7 +42,7 @@ def audio_loop():
         wait for audio to be turned on by user
         open microphone audio input stream
         collect audio callbacks
-        
+
     '''
     while True:
 

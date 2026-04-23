@@ -35,6 +35,7 @@ def initialize_db():
         content TEXT NOT NULL,
         status TEXT,
         date TEXT,
+        priority_rank INTEGER DEFAULT 0,
         embedding BLOB,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         session_id INTEGER

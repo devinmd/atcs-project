@@ -51,7 +51,7 @@ input.message-input {
   font-size: 1rem;
   flex-grow: 1;
   font-size: 0.875rem;
-  font-weight:400;
+  font-weight: 400;
   transition: 100ms;
 }
 
@@ -66,8 +66,7 @@ button {
   border-radius: 0.5rem;
   color: var(--text-color);
   font-size: 0.875rem;
-  font-weight:500;
-  margin-top: auto;
+  font-weight: 500;
   cursor: pointer;
   padding: 0 1rem;
   border: none;
@@ -106,7 +105,7 @@ button.btn-accent:hover {
   border-radius: 1rem;
   box-sizing: border-box;
   overflow: hidden;
-  max-height: 50vh;
+  max-height: 35vh;
 }
 
 .card .card-title {
@@ -128,6 +127,10 @@ button.btn-accent:hover {
 
 .card .col .card {
   padding: 0.5rem 1rem;
+}
+
+.priority-highlight {
+  border: 1px solid #f8c200 !important;
 }
 
 .card .col span {

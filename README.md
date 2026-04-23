@@ -81,3 +81,4 @@ npm i
 - [x] embed entities to be able to search through them for answering queries
 - [ ] remove queries from database? storing them is unecessary unless we store answers as well
 - [ ] entries may not need to be stored either because the entity is already extracted?
+- [ ] include text files as context/notes

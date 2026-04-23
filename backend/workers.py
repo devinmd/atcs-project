@@ -75,6 +75,7 @@ def llm_worker():
         add_entity(
             type=summaryJSON.get("type", "note"),
             content=summaryJSON.get("content", summaryString),
+            priority_rank=summaryJSON.get("priority_rank", 0),
         )
         remove_status("Processing")
 
@@ -245,7 +246,7 @@ def query_llm(content):
 
     output = llm.create_chat_completion(
         messages=[
-            {"role": "system", "content": "You are a helpful assistant. Answer the user's query based on the provided context."},
+            {"role": "system", "content": QUERY_PROMPT},
             {"role": "user", "content": content}
         ],
         temperature=0.7
@@ -264,7 +265,7 @@ def get_all_entities():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    cur.execute("SELECT id, content, type, date, embedding FROM entities")
+    cur.execute("SELECT id, content, type, date, priority_rank, embedding FROM entities")
     rows = cur.fetchall()
     entities = []
     for row in rows:
@@ -273,7 +274,8 @@ def get_all_entities():
             "content": row[1], 
             "type": row[2],
             "date": row[3],
-            "embedding": np.frombuffer(row[4], dtype=np.float32)  # convert from stored bytes
+            "priority_rank": row[4] if row[4] is not None else 0,
+            "embedding": np.frombuffer(row[5], dtype=np.float32)  # convert from stored bytes
         })
     return entities
   

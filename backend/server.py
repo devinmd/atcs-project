@@ -78,9 +78,9 @@ def send_all_queries(sid):
 def send_all_entities(sid, type):
     print("client request all entities data:", sid)
     if type:
-        query = f"SELECT id, type, content, status, date, created_at, session_id FROM entities WHERE type = '{type}'"
+        query = f"SELECT id, type, content, status, date, priority_rank, created_at, session_id FROM entities WHERE type = '{type}'"
     else:
-        query = "SELECT id, type, content, status, date, created_at, session_id FROM entities"
+        query = "SELECT id, type, content, status, date, priority_rank, created_at, session_id FROM entities"
 
     data = query_db(query)
 

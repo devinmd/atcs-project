@@ -45,17 +45,17 @@ def add_query(content):
 
 
 # insert entity into the database
-def add_entity(content="", type="", status="", date="", embed_bytes=None):
+def add_entity(content="", type="", status="", date="", priority_rank=0, embed_bytes=None):
     from server import update_entities
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO entities (type, content, status, date, session_id, embedding)
-    VALUES (?, ?, ?, ?, ?, ?)
-    RETURNING id, type, content, status, date, created_at, session_id
-    """, (type, content, status, date, session_id, sqlite3.Binary(embed_bytes) if embed_bytes is not None else None))
+    INSERT INTO entities (type, content, status, date, priority_rank, session_id, embedding)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    RETURNING id, type, content, status, date, priority_rank, created_at, session_id
+    """, (type, content, status, date, priority_rank, session_id, sqlite3.Binary(embed_bytes) if embed_bytes is not None else None))
 
     row = cur.fetchone()
 
@@ -68,7 +68,14 @@ def add_entity(content="", type="", status="", date="", embed_bytes=None):
 # helper to add multiple entities
 def add_entities(data, embed_bytes=None):
     for i in data:
-        add_entity(i["content"], i["type"], i["status"], i["date"], embed_bytes=embed_bytes)
+        add_entity(
+            i["content"],
+            i["type"],
+            i.get("status", ""),
+            i.get("date", ""),
+            i.get("priority_rank", 0),
+            embed_bytes=embed_bytes
+        )
 
 
 # returns a list of the last X entries' content

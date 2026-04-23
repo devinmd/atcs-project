@@ -35,6 +35,7 @@ interface entityData {
   content: string;
   status: string;
   date: string;
+  priority_rank: number;
   created_at: string;
   session_id: number;
 }
@@ -59,6 +60,18 @@ function App() {
   const [entryInputValue, setEntryInputValue] = useState('');
   const [queryInputValue, setQueryInputValue] = useState('');
   const [micOn, setMicOn] = useState(false);
+
+  function getSortedEntities(items: entityData[]) {
+    return [...items].sort((a, b) => {
+      const priorityDiff = (b.priority_rank || 0) - (a.priority_rank || 0);
+      if (priorityDiff !== 0) return priorityDiff;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }
+
+  function getHighestPriority(items: entityData[]) {
+    return items.reduce((max, item) => Math.max(max, item.priority_rank || 0), 0);
+  }
 
   function deleteEntity(id: number) {
     socket.emit("delete_entity", id)
@@ -183,9 +196,24 @@ function App() {
       <div className="topnav">
         <span>AT CS Project Dashboard</span>
         <span>{date.toDateString()}</span>
+        <button onClick={() => { toggleMic() }}>{micOn ? "Turn off Microphone" : "Turn on Microphone"}</button>
       </div>
       <div className="main">
         <div className="cols" style={{ gridTemplateColumns: "1fr 1fr" }}>
+          <div className="card">
+            <div className="card-title">
+              <h3>Welcome</h3>
+            </div>
+            <div className="card-content" style={{ display: "flex", gap: "0.5rem" }}>
+              <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row", width: "100%" }}>
+                <input
+                  value={entryInputValue}
+                  onChange={(e) => setEntryInputValue(e.target.value)}
+                  className='message-input' type="text" placeholder='Type context/data here' />
+                <button className='btn-accent' onClick={() => sendEntry(entryInputValue)}>Capture Entry</button>
+              </div>
+            </div>
+          </div>
           <div className='card'>
             <div className="card-title">
               <h3>Chat</h3>
@@ -200,49 +228,42 @@ function App() {
                 ))}
               </div>}
               <div style={{ display: "flex", gap: "0.5rem", flexDirection: "column" }}>
-                <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row" }}>
-                  <input
-                    value={entryInputValue}
-                    onChange={(e) => setEntryInputValue(e.target.value)}
-                    className='message-input' type="text" placeholder='Add context/data' />
-                  <button className='btn-accent' onClick={() => sendEntry(entryInputValue)}>Capture Entry</button>
-                </div>
+
                 <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row" }}>
                   <input
                     value={queryInputValue}
                     onChange={(e) => setQueryInputValue(e.target.value)}
-                    className='message-input' type="text" placeholder='Ask the LLM' />
+                    className='message-input' type="text" placeholder='Type question here' />
                   <button className='btn-accent' onClick={() => sendQuery(queryInputValue)}>Ask Query</button>
                 </div>
               </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="card-title">
-              <h3>Actions</h3>
-            </div>
-            <div className="card-content" style={{ display: "flex", gap: "0.5rem" }}>
-              <button onClick={() => { toggleMic() }}>{micOn ? "Turn off Microphone" : "Turn on Microphone"}</button>
-              {/* <button onClick={() => { processEntries() }}>Process</button> */}
             </div>
           </div>
         </div>
         <div className="cols" style={{ gridTemplateColumns: "1fr 1fr", flexGrow: "1" }}>
           <div className='card' >
             <div className="card-title">
-              <h3>Reminders & To-do</h3>
+              <h3>To-do</h3>
             </div>
             <div className="card-content">
               {entities && <div className="col" >
-                {entities.todo.slice().reverse().map((item, index) => (
-                  <div key={index} className="card" style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
+                {getSortedEntities(entities.todo).map((item, index) => (
+                  <div
+                    key={index}
+                    className={`card ${item.priority_rank === getHighestPriority(entities.todo) && item.priority_rank > 0 ? "priority-highlight" : ""}`}
+                    style={{ display: "flex", flexDirection: "row", gap: "1rem" }}
+                  >
                     <div style={{ paddingTop: "0.5rem", flexDirection: "column", display: "flex" }} >
                       <input type="checkbox" style={{ width: "1rem", height: "1rem", margin: 0 }} />
-                      <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>X</button>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <span>{formatDate(item.created_at)}</span>
+                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                      <div style={{ display: "flex", flexDirection: "row", gap: "1rem", alignItems: "center", width: "100%" }}>
+                        <span>{formatDate(item.created_at)}</span>
+                        <span className="priority-label">{item.priority_rank ?? 0}/5 Priority</span>
+                        <button style={{ width: "1.5rem", height: "1.5rem", padding: "0", marginLeft: "auto" }} onClick={() => deleteEntity(item.id)}>X</button>
+                      </div>
                       <span>{item.content}</span>
+                      <span>{item.date}</span>
                     </div>
                   </div>
                 ))}
@@ -253,11 +274,17 @@ function App() {
             <div className="card-title"><h3>Notes & Summaries</h3></div>
             <div className="card-content">
               {entities && <div className="col" >
-                {entities.note.slice().reverse().map((item, index) => (
-                  <div key={index} className="card">
+                {getSortedEntities(entities.note).map((item, index) => (
+                  <div
+                    key={index}
+                    className={`card ${item.priority_rank === getHighestPriority(entities.note) && item.priority_rank > 0 ? "priority-highlight" : ""}`}
+                  >
                     <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
                       <span>{formatDate(item.created_at)}</span>
                       <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>X</button>
+                    </div>
+                    <div>
+                      <span className="priority-label">Priority: {item.priority_rank ?? 0}</span>
                     </div>
                     <div>
                       <span>{item.content}</span>
