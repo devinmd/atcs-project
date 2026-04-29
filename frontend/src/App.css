@@ -133,10 +133,6 @@ button.btn-accent:hover {
   border: 1px solid #f8c200 !important;
 }
 
-.card .col span {
-  line-height: 1.5;
-}
-
 .success,
 .online {
   color: #13995d;

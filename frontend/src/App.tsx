@@ -60,6 +60,7 @@ function App() {
   const [entryInputValue, setEntryInputValue] = useState('');
   const [queryInputValue, setQueryInputValue] = useState('');
   const [micOn, setMicOn] = useState(false);
+  const [overviewStr, setOverviewStr] = useState("");
 
   function getSortedEntities(items: entityData[]) {
     return [...items].sort((a, b) => {
@@ -161,6 +162,12 @@ function App() {
       });
     }
 
+    // on receive overview
+    function onOverviewResponse(data: string) {
+      console.log(data)
+      setOverviewStr(data)
+    }
+
     socket.onAny((event, ...args) => {
       console.log("socket event:", event, args);
     });
@@ -176,10 +183,12 @@ function App() {
     socket.on("update_entries", onUpdateEntries);
     socket.on("update_queries", onUpdateQueries);
     socket.on("update_entities", onUpdateEntities);
+    socket.on('overview_response', onOverviewResponse);
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
+      socket.off('overview_response', onOverviewResponse);
       socket.off('status', onStatusChange);
       socket.off('all_entries', onAllEntries);
       socket.off('all_queries', onAllQueries); socket.off('query_response', onQueryResponse); socket.off('all_entities', onAllEntities);
@@ -204,7 +213,10 @@ function App() {
             <div className="card-title">
               <h3>Welcome</h3>
             </div>
-            <div className="card-content" style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="card-content" style={{ display: "flex", gap: "0.5rem", flexDirection: "column" }}>
+              <h4>Agenda</h4>
+              <p>{overviewStr}</p>
+              <button onClick={() => socket.emit("generate_overview")}>Generate Agenda</button>
               <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row", width: "100%" }}>
                 <input
                   value={entryInputValue}
@@ -218,24 +230,21 @@ function App() {
             <div className="card-title">
               <h3>Chat</h3>
             </div>
-            <div className="card-content" style={{ display: "flex", gap: "1rem", flexDirection: "column", overflow: "hidden" }}>
+            <div className="card-content" style={{ display: "flex", gap: "1rem", flexDirection: "column", overflow: "hidden", height: "100%" }}>
               {queryResponses && <div className="col" style={{ overflow: "auto" }} >
                 {queryResponses.slice().map((item, index) => (
                   <div key={index} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                     <span style={{ backgroundColor: "var(--bg-l1)", padding: "0.25rem 0.5rem", borderRadius: "0.5rem" }} > {item.query} </span>
-                    <span > {item.response} </span>
+                    <p > {item.response} </p>
                   </div>
                 ))}
               </div>}
-              <div style={{ display: "flex", gap: "0.5rem", flexDirection: "column" }}>
-
-                <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row" }}>
-                  <input
-                    value={queryInputValue}
-                    onChange={(e) => setQueryInputValue(e.target.value)}
-                    className='message-input' type="text" placeholder='Type question here' />
-                  <button className='btn-accent' onClick={() => sendQuery(queryInputValue)}>Ask Query</button>
-                </div>
+              <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row", marginTop: "auto" }}>
+                <input
+                  value={queryInputValue}
+                  onChange={(e) => setQueryInputValue(e.target.value)}
+                  className='message-input' type="text" placeholder='Type question here' />
+                <button className='btn-accent' onClick={() => sendQuery(queryInputValue)}>Ask Query</button>
               </div>
             </div>
           </div>
@@ -262,8 +271,8 @@ function App() {
                         <span className="priority-label">{item.priority_rank ?? 0}/5 Priority</span>
                         <button style={{ width: "1.5rem", height: "1.5rem", padding: "0", marginLeft: "auto" }} onClick={() => deleteEntity(item.id)}>X</button>
                       </div>
-                      <span>{item.content}</span>
-                      <span>{item.date}</span>
+                      <p>{item.content}</p>
+                      <span>Due: {item.date}</span>
                     </div>
                   </div>
                 ))}
@@ -283,11 +292,11 @@ function App() {
                       <span>{formatDate(item.created_at)}</span>
                       <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>X</button>
                     </div>
-                    <div>
+                    {/* <div>
                       <span className="priority-label">Priority: {item.priority_rank ?? 0}</span>
-                    </div>
+                    </div> */}
                     <div>
-                      <span>{item.content}</span>
+                      <p>{item.content}</p>
                     </div>
                   </div>
                 ))}

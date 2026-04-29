@@ -1,3 +1,4 @@
+from datetime import date
 import sqlite3
 import json
 import numpy as np
@@ -214,10 +215,12 @@ def process_entry(content):
     print(content)
     add_status("Processing")
 
+    current_date = year, month, day, weekday = date.today().strftime("%Y %m %d %A").split()
+
     output = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": content}
+            {"role": "user", "content": f"Todays Date: {current_date}, Content: {content}"}
         ],
         temperature=0.2
     )
@@ -244,10 +247,12 @@ def query_llm(content):
     print("QUERYING LLM...")
     print(content)
 
+    current_date = year, month, day, weekday = date.today().strftime("%Y %m %d %A").split()
+
     output = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": QUERY_PROMPT},
-            {"role": "user", "content": content}
+            {"role": "user", "content": f"Todays Date: {current_date}, Query: {content}"}
         ],
         temperature=0.7
     )
@@ -256,41 +261,42 @@ def query_llm(content):
 
 # method to embed text
 def embed_text(text):
-  embedding = embedModel.encode(text)
-  print(embedding.shape)
-  return(embedding)
+    embedding = embedModel.encode(text)
+    print(embedding.shape)
+    return (embedding)
 
 
 def get_all_entities():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    cur.execute("SELECT id, content, type, date, priority_rank, embedding FROM entities")
+    cur.execute(
+        "SELECT id, content, type, date, priority_rank, embedding FROM entities")
     rows = cur.fetchall()
     entities = []
     for row in rows:
         entities.append({
             "id": row[0],
-            "content": row[1], 
+            "content": row[1],
             "type": row[2],
             "date": row[3],
             "priority_rank": row[4] if row[4] is not None else 0,
-            "embedding": np.frombuffer(row[5], dtype=np.float32)  # convert from stored bytes
+            # convert from stored bytes
+            "embedding": np.frombuffer(row[5], dtype=np.float32)
         })
     return entities
-  
-  
+
+
 def find_relevant_entities(query, num, entities):
-  
+
     query_embedding = embed_text(query)
     entity_embeddings = np.array([e["embedding"] for e in entities])
-  
+
     scores = util.cos_sim(query_embedding, entity_embeddings)[0]
-    top_indices = scores.topk(min(num,len(entities))).indices
+    top_indices = scores.topk(min(num, len(entities))).indices
 
     relevant_entities = [entities[i] for i in top_indices]
     for e in relevant_entities:
         e.pop("embedding", None)
     print(relevant_entities)
-    return(relevant_entities)
-    
+    return (relevant_entities)

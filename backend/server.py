@@ -132,16 +132,31 @@ def receive_query(sid: str, msg: str):
 
     from workers import query_llm, find_relevant_entities, get_all_entities
     add_status("Querying")
-    
+
     all_entities = get_all_entities()
     relevant_entities = find_relevant_entities(msg, 5, all_entities)
-    
+
     # perhaps get some context from entries
     response = query_llm(f"Context: {relevant_entities}\nQuery: {msg}")
     # emit response directly to frontend
     sio.emit("query_response", {"query": msg, "response": response}, to=sid)
     remove_status("Querying")
     add_query(msg)
+
+
+@sio.event
+def generate_overview(sid: str):
+    '''
+    get all entities
+    '''
+    from workers import query_llm, find_relevant_entities, get_all_entities
+    add_status("Querying")
+    all_entities = get_all_entities()
+    relevant_entities = find_relevant_entities(
+        OVERVIEW_PROMPT, 5, all_entities)
+    response = query_llm(f"{relevant_entities}")
+    sio.emit("overview_response", response, to=sid)
+    remove_status("Querying")
 
 
 # send one entry that was added to the DB
