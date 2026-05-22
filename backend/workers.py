@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 import sqlite3
 import json
 import numpy as np
@@ -215,12 +215,18 @@ def process_entry(content):
     print(content)
     add_status("Processing")
 
-    current_date = year, month, day, weekday = date.today().strftime("%Y %m %d %A").split()
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    tomorrow = today + timedelta(days=1)
+    
+    today_str = today.strftime("%Y %m %d %A")
+    yesterday_str = yesterday.strftime("%Y %m %d %A")
+    tomorrow_str = tomorrow.strftime("%Y %m %d %A")
 
     output = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"Todays Date: {current_date}, Content: {content}"}
+            {"role": "user", "content": f"Yesterday: {yesterday_str}, Today: {today_str}, Tomorrow: {tomorrow_str}, Content: {content}"}
         ],
         temperature=0.2
     )
@@ -247,14 +253,20 @@ def query_llm(content):
     print("QUERYING LLM...")
     print(content)
 
-    current_date = year, month, day, weekday = date.today().strftime("%Y %m %d %A").split()
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    tomorrow = today + timedelta(days=1)
+    
+    today_str = today.strftime("%Y %m %d %A")
+    yesterday_str = yesterday.strftime("%Y %m %d %A")
+    tomorrow_str = tomorrow.strftime("%Y %m %d %A")
 
     output = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": QUERY_PROMPT},
-            {"role": "user", "content": f"Todays Date: {current_date}, Query: {content}"}
+            {"role": "user", "content": f"Yesterday: {yesterday_str}, Today: {today_str}, Tomorrow: {tomorrow_str}, Query: {content}"}
         ],
-        temperature=0.7
+        temperature=0.2
     )
     return (output['choices'][0]['message']['content'])
 

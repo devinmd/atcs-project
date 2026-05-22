@@ -19,17 +19,28 @@ For notes, if the topics are related they can remain in one note with a title.
 """
 
 QUERY_PROMPT = """
-You are a helpful assistant. 
-Answer the user's query directly.
-"""
+You are a productivity assistant.
 
-OVERVIEW_PROMPT = """
-You are a helpful assistant and your goal is to generate a direct, concise, and powerful actionable to-do overview and plan agenda for the user so they can be maximally productive.
-Only use todos, never use note entries as context.
-Always assemble the response as follows:
-Start with todays date.
-Then anything due today.
-Then high priority todo items.
+Write a short, natural daily productivity overview.
+
+Rules:
+- Output ONLY the final response
+- No reasoning
+- No explanations
+- No analysis
+- No introductions
+- No conclusions
+- No references to the input
+- No phrases like:
+  - "Based on"
+  - "It seems"
+  - "The data"
+  - "We need to"
+  - "Here are"
+
+If there are no important tasks, output exactly:
+No important tasks right now.
+"We need to compare the dates..."
 """
 
 

@@ -2,8 +2,8 @@
   display: flex;
   gap: 2rem;
   padding: 0 1rem;
-  border-bottom: 1px solid var(--bg-l2);
-  background-color: var(--bg-l1);
+  border-bottom: 1px solid var(--bg-d2);
+  background-color: var(--bg-d1);
   box-sizing: border-box;
   align-items: center;
   height: 3rem;
@@ -19,8 +19,8 @@
   display: flex;
   gap: 1rem;
   padding: 0 1rem;
-  border-top: 1px solid var(--bg-l2);
-  background-color: var(--bg-l1);
+  border-top: 1px solid var(--bg-d2);
+  background-color: var(--bg-d1);
   box-sizing: border-box;
   align-items: center;
   height: 2rem;
@@ -41,7 +41,7 @@
 }
 
 input.message-input {
-  background-color: var(--bg-l1);
+  background-color: var(--bg-d1);
   outline: none;
   border: none;
   height: 2rem;
@@ -57,7 +57,7 @@ input.message-input {
 
 input.message-input:hover,
 input.message-input:focus {
-  background-color: var(--bg-l2);
+  background-color: var(--bg-d2);
 }
 
 button {
@@ -71,12 +71,12 @@ button {
   padding: 0 1rem;
   border: none;
   transition: 100ms;
-  background-color: var(--bg-l1);
+  background-color: var(--bg-d1);
   outline: none;
 }
 
 button:hover {
-  background-color: var(--bg-l2);
+  background-color: var(--bg-d2);
 }
 
 button.btn-accent {
@@ -94,14 +94,14 @@ button.btn-accent:hover {
 .main .col {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
 .card {
   display: flex;
   flex-direction: column;
   min-height: 3rem;
-  border: 1px solid var(--bg-l2);
+  border: 1px solid var(--bg-d2);
+  background-color: var(--bg-l1);
   border-radius: 1rem;
   box-sizing: border-box;
   overflow: hidden;
@@ -109,8 +109,7 @@ button.btn-accent:hover {
 }
 
 .card .card-title {
-  border-bottom: 1px solid var(--bg-l2);
-  /* background-color: var(--bg-l1); */
+  border-bottom: 1px solid var(--bg-d2);
   padding: 1rem;
 }
 
@@ -122,7 +121,8 @@ button.btn-accent:hover {
 .card .card {
   background-color: var(--bg-l1);
   border: none;
-  border-radius: 0.5rem;
+  border-bottom: 1px solid var(--bg-d2);
+  border-radius: 0;
 }
 
 .card .col .card {
@@ -130,7 +130,7 @@ button.btn-accent:hover {
 }
 
 .priority-highlight {
-  border: 1px solid #f8c200 !important;
+  /* border: 1px solid #f8c200 !important; */
 }
 
 .success,

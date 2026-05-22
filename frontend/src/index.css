@@ -4,17 +4,14 @@
   font-weight: 400;
   letter-spacing: -0.01em;
 
-  --bg: #0a0a0a;
-  --bg-l1: #1a1a1a;
-  --bg-l2: #303030;
-  --bg: #ffffff;
-  --bg-l1: #efefef;
-  --bg-l2: #dfdfdf;
+  --text: #67666d;
+  --bg: #fcfcfc;
+  --bg-l1: #fff;
+  --bg-d1: #efefef;
+  --bg-d2: #dfdfdf;
 
-  --text-color: #afafaf;
-  --heading-color: #efefef;
-  --text-color: #202020;
   --heading-color: #101010;
+  --text-color: #505050;
   background-color: var(--bg);
   color: var(--text-color);
 
@@ -70,5 +67,5 @@ p {
   margin: 0;
   font-size: 1rem;
   color: var(--text-color);
-  line-height: 1.3;
+  line-height: 1.5;
 }
