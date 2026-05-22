@@ -31,10 +31,10 @@ def add_query(content):
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO queries (content, session_id)
-    VALUES (?, ?)
-    RETURNING id, content, created_at, session_id
-    """, (content, session_id))
+    INSERT INTO queries (query, response, session_id)
+    VALUES (?, ?, ?)
+    RETURNING id, query, response, created_at, session_id
+    """, (content, None, session_id))
 
     row = cur.fetchone()
 
@@ -42,6 +42,7 @@ def add_query(content):
     conn.close()
 
     update_queries(dict(row))
+    return dict(row)
 
 
 # insert entity into the database
@@ -93,6 +94,19 @@ def get_entries(limit=10):
     conn.close()
 
     return [row[0] for row in rows][::-1]
+
+
+# update query response in the database
+def update_query_response(query_id, response):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    UPDATE queries SET response = ? WHERE id = ?
+    """, (response, query_id))
+
+    conn.commit()
+    conn.close()
 
 
 # generate a session id

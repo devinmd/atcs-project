@@ -60,6 +60,7 @@ function App() {
   const [queryInputValue, setQueryInputValue] = useState("");
   const [micOn, setMicOn] = useState(false);
   const [overviewStr, setOverviewStr] = useState("");
+  const [overviewLoading, setOverviewLoading] = useState(false);
 
   function getSortedEntities(items: entityData[]) {
     return [...items].sort((a, b) => {
@@ -168,6 +169,7 @@ function App() {
     function onOverviewResponse(data: string) {
       console.log(data);
       setOverviewStr(data);
+      setOverviewLoading(false);
     }
 
     socket.onAny((event, ...args) => {
@@ -204,6 +206,13 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (connected) {
+      setOverviewLoading(true);
+      socket.emit("generate_overview");
+    }
+  }, [connected]);
+
   return (
     <>
       <div className="topnav">
@@ -218,15 +227,22 @@ function App() {
         </button>
       </div>
       <div className="main">
-        <div className="cols" style={{ gridTemplateColumns: "1fr 1fr" }}>
+        <div className="cols">
           <div className="card">
             <div className="card-title">
               <h3>Welcome</h3>
             </div>
-            <div className="card-content" style={{ display: "flex", gap: "0.5rem", flexDirection: "column" }}>
+            <div className="card-content">
               <h4>Agenda</h4>
-              <p>{overviewStr}</p>
-              <button onClick={() => socket.emit("generate_overview")}>Generate Agenda</button>
+              <p>{overviewLoading ? "Loading..." : overviewStr}</p>
+              <button
+                onClick={() => {
+                  setOverviewLoading(true);
+                  socket.emit("generate_overview");
+                }}
+              >
+                Generate Agenda
+              </button>
               <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row", width: "100%" }}>
                 <input value={entryInputValue} onChange={(e) => setEntryInputValue(e.target.value)} className="message-input" type="text" placeholder="Type context/data here" />
                 <button className="btn-accent" onClick={() => sendEntry(entryInputValue)}>
@@ -239,12 +255,12 @@ function App() {
             <div className="card-title">
               <h3>Chat</h3>
             </div>
-            <div className="card-content" style={{ display: "flex", gap: "1rem", flexDirection: "column", overflow: "hidden", height: "100%" }}>
+            <div className="card-content" style={{ overflow: "hidden" }}>
               {queryResponses && (
                 <div className="col" style={{ overflow: "auto" }}>
                   {queryResponses.slice().map((item, index) => (
                     <div key={index} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                      <span style={{ backgroundColor: "var(--bg-l1)", padding: "0.25rem 0.5rem", borderRadius: "0.5rem" }}> {item.query} </span>
+                      <span style={{ backgroundColor: "var(--bg-d1)", padding: "0.25rem 0.5rem", borderRadius: "0.5rem" }}> {item.query} </span>
                       <p> {item.response} </p>
                     </div>
                   ))}
@@ -259,7 +275,7 @@ function App() {
             </div>
           </div>
         </div>
-        <div className="cols" style={{ gridTemplateColumns: "1fr 1fr", flexGrow: "1" }}>
+        <div className="cols">
           <div className="card">
             <div className="card-title">
               <h3>To-do</h3>
@@ -270,7 +286,7 @@ function App() {
                   {getSortedEntities(entities.todo).map((item, index) => (
                     <div key={index} className={`card ${item.priority_rank === getHighestPriority(entities.todo) && item.priority_rank > 0 ? "priority-highlight" : ""}`} style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
                       <div style={{ paddingTop: "0.5rem", flexDirection: "column", display: "flex" }}>
-                        <input type="checkbox" style={{ width: "1rem", height: "1rem", margin: 0 }} />
+                        <input type="checkbox" />
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
                         <div style={{ display: "flex", flexDirection: "row", gap: "1rem", alignItems: "center", width: "100%" }}>
@@ -300,7 +316,7 @@ function App() {
                     <div key={index} className={`card ${item.priority_rank === getHighestPriority(entities.note) && item.priority_rank > 0 ? "priority-highlight" : ""}`}>
                       <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
                         <span>{formatDate(item.created_at)}</span>
-                        <button style={{ width: "1rem", height: "1rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>
+                        <button style={{ width: "1.5rem", height: "1.5rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>
                           X
                         </button>
                       </div>
@@ -317,7 +333,7 @@ function App() {
             </div>
           </div>
         </div>
-        <div className="card">
+        <div className="card" style={{ display: "none" }}>
           <div className="card-title">
             <h3>Log</h3>
           </div>

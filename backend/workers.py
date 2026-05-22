@@ -218,7 +218,7 @@ def process_entry(content):
     today = date.today()
     yesterday = today - timedelta(days=1)
     tomorrow = today + timedelta(days=1)
-    
+
     today_str = today.strftime("%Y %m %d %A")
     yesterday_str = yesterday.strftime("%Y %m %d %A")
     tomorrow_str = tomorrow.strftime("%Y %m %d %A")
@@ -256,7 +256,7 @@ def query_llm(content):
     today = date.today()
     yesterday = today - timedelta(days=1)
     tomorrow = today + timedelta(days=1)
-    
+
     today_str = today.strftime("%Y %m %d %A")
     yesterday_str = yesterday.strftime("%Y %m %d %A")
     tomorrow_str = tomorrow.strftime("%Y %m %d %A")

@@ -23,7 +23,8 @@ def initialize_db():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS queries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        content TEXT NOT NULL,
+        query TEXT NOT NULL,
+        response TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         session_id INTEGER
     )

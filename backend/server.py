@@ -71,7 +71,7 @@ def send_all_entries(sid):
 
 def send_all_queries(sid):
     print("client request all queries:", sid)
-    data = query_db("SELECT id, content, created_at, session_id FROM queries")
+    data = query_db("SELECT id, query, response, created_at, session_id FROM queries")
     sio.emit("all_queries", data, to=sid)
 
 
@@ -131,17 +131,26 @@ def receive_query(sid: str, msg: str):
     '''
 
     from workers import query_llm, find_relevant_entities, get_all_entities
+    from store import add_query, update_query_response
+    
     add_status("Querying")
+
+    # store query in database
+    query_row = add_query(msg)
+    query_id = query_row["id"]
 
     all_entities = get_all_entities()
     relevant_entities = find_relevant_entities(msg, 5, all_entities)
 
     # perhaps get some context from entries
     response = query_llm(f"Context: {relevant_entities}\nQuery: {msg}")
+    
+    # store response in database
+    update_query_response(query_id, response)
+    
     # emit response directly to frontend
     sio.emit("query_response", {"query": msg, "response": response}, to=sid)
     remove_status("Querying")
-    add_query(msg)
 
 
 @sio.event

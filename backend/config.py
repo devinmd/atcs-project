@@ -19,6 +19,11 @@ For notes, if the topics are related they can remain in one note with a title.
 """
 
 QUERY_PROMPT = """
+You are a helpful productivity assistant.
+Answer the user's query directly and concisely.
+"""
+
+OVERVIEW_PROMPT = """
 You are a productivity assistant.
 
 Write a short, natural daily productivity overview.

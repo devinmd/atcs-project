@@ -88,7 +88,9 @@ button.btn-accent:hover {
 
 .main .cols {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  flex-grow: 1;
 }
 
 .main .col {
@@ -105,7 +107,6 @@ button.btn-accent:hover {
   border-radius: 1rem;
   box-sizing: border-box;
   overflow: hidden;
-  max-height: 35vh;
 }
 
 .card .card-title {
@@ -114,6 +115,9 @@ button.btn-accent:hover {
 }
 
 .card .card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   overflow: scroll;
   padding: 1rem;
 }
@@ -129,8 +133,10 @@ button.btn-accent:hover {
   padding: 0.5rem 1rem;
 }
 
-.priority-highlight {
-  /* border: 1px solid #f8c200 !important; */
+input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
 }
 
 .success,
