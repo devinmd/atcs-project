@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { socket } from "./socket";
 import { formatDate } from "./helpers";
@@ -12,7 +12,8 @@ interface entryData {
 
 interface queryData {
   id: number;
-  content: string;
+  query: string;
+  response: string | null;
   created_at: string;
   session_id: number;
 }
@@ -53,7 +54,6 @@ function App() {
   const [status, setStatus] = useState<string[]>([]);
   const [entries, setEntries] = useState<entryData[]>([]);
   const [queries, setQueries] = useState<queryData[]>([]);
-  const [queryResponses, setQueryResponses] = useState<queryResponse[]>([]);
   const [entities, setEntities] = useState<allEntities>({ todo: [], note: [] });
   const [appData, setAppData] = useState<appData>();
   const [entryInputValue, setEntryInputValue] = useState("");
@@ -120,12 +120,27 @@ function App() {
 
     // receive all queries
     function onAllQueries(data: queryData[]) {
-      setQueries(data);
+      setQueries(data.slice(-10));
     }
 
     // receive query response
     function onQueryResponse(data: queryResponse) {
-      setQueryResponses((prev) => [...prev, data]);
+      setQueries((prev) => {
+        let updated = false;
+        const next = prev.map((item) => {
+          if (!updated && item.query === data.query && !item.response) {
+            updated = true;
+            return { ...item, response: data.response };
+          }
+          return item;
+        });
+
+        if (updated) {
+          return next;
+        }
+
+        return [...prev, { id: Date.now(), query: data.query, response: data.response, created_at: new Date().toISOString(), session_id: 0 }].slice(-10);
+      });
     }
 
     // receive all entities
@@ -151,7 +166,7 @@ function App() {
 
     // add to query list
     function onUpdateQueries(data: queryData) {
-      setQueries((prev) => [...prev, data]);
+      setQueries((prev) => [...prev, data].slice(-10));
     }
 
     // add to entity list
@@ -227,110 +242,106 @@ function App() {
         </button>
       </div>
       <div className="main">
-        <div className="cols">
-          <div className="card">
-            <div className="card-title">
-              <h3>Welcome</h3>
-            </div>
-            <div className="card-content">
-              <h4>Agenda</h4>
-              <p>{overviewLoading ? "Loading..." : overviewStr}</p>
-              <button
-                onClick={() => {
-                  setOverviewLoading(true);
-                  socket.emit("generate_overview");
-                }}
-              >
-                Generate Agenda
-              </button>
-              <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row", width: "100%" }}>
-                <input value={entryInputValue} onChange={(e) => setEntryInputValue(e.target.value)} className="message-input" type="text" placeholder="Type context/data here" />
-                <button className="btn-accent" onClick={() => sendEntry(entryInputValue)}>
-                  Capture Entry
-                </button>
-              </div>
-            </div>
+        <div className="card">
+          <div className="card-title">
+            <h3>Welcome</h3>
           </div>
-          <div className="card">
-            <div className="card-title">
-              <h3>Chat</h3>
-            </div>
-            <div className="card-content" style={{ overflow: "hidden" }}>
-              {queryResponses && (
-                <div className="col" style={{ overflow: "auto" }}>
-                  {queryResponses.slice().map((item, index) => (
-                    <div key={index} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                      <span style={{ backgroundColor: "var(--bg-d1)", padding: "0.25rem 0.5rem", borderRadius: "0.5rem" }}> {item.query} </span>
-                      <p> {item.response} </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row", marginTop: "auto" }}>
-                <input value={queryInputValue} onChange={(e) => setQueryInputValue(e.target.value)} className="message-input" type="text" placeholder="Type question here" />
-                <button className="btn-accent" onClick={() => sendQuery(queryInputValue)}>
-                  Ask Query
-                </button>
-              </div>
+          <div className="card-content">
+            <h4>Agenda</h4>
+            <p>{overviewLoading ? "Loading..." : overviewStr}</p>
+            <button
+              onClick={() => {
+                setOverviewLoading(true);
+                socket.emit("generate_overview");
+              }}
+            >
+              Generate Agenda
+            </button>
+            <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row", width: "100%" }}>
+              <input value={entryInputValue} onChange={(e) => setEntryInputValue(e.target.value)} className="message-input" type="text" placeholder="Type context/data here" />
+              <button className="btn-accent" onClick={() => sendEntry(entryInputValue)}>
+                Capture Entry
+              </button>
             </div>
           </div>
         </div>
-        <div className="cols">
-          <div className="card">
-            <div className="card-title">
-              <h3>To-do</h3>
-            </div>
-            <div className="card-content">
-              {entities && (
-                <div className="col">
-                  {getSortedEntities(entities.todo).map((item, index) => (
-                    <div key={index} className={`card ${item.priority_rank === getHighestPriority(entities.todo) && item.priority_rank > 0 ? "priority-highlight" : ""}`} style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
-                      <div style={{ paddingTop: "0.5rem", flexDirection: "column", display: "flex" }}>
-                        <input type="checkbox" />
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                        <div style={{ display: "flex", flexDirection: "row", gap: "1rem", alignItems: "center", width: "100%" }}>
-                          <span>{formatDate(item.created_at)}</span>
-                          <span className="priority-label">{item.priority_rank ?? 0}/5 Priority</span>
-                          <button style={{ width: "1.5rem", height: "1.5rem", padding: "0", marginLeft: "auto" }} onClick={() => deleteEntity(item.id)}>
-                            X
-                          </button>
-                        </div>
-                        <p>{item.content}</p>
-                        <span>Due: {item.date}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+        <div className="card">
+          <div className="card-title">
+            <h3>Chat</h3>
+          </div>
+          <div className="card-content" style={{ overflow: "hidden" }}>
+            {queries && (
+              <div className="col" style={{ overflow: "auto" }}>
+                {queries.slice().map((item, index) => (
+                  <div key={index} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <span style={{ backgroundColor: "var(--bg-d1)", padding: "0.25rem 0.5rem", borderRadius: "0.5rem" }}> {item.query} </span>
+                    <p> {item.response} </p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: "0.5rem", flexDirection: "row", marginTop: "auto" }}>
+              <input value={queryInputValue} onChange={(e) => setQueryInputValue(e.target.value)} className="message-input" type="text" placeholder="Type question here" />
+              <button className="btn-accent" onClick={() => sendQuery(queryInputValue)}>
+                Ask Query
+              </button>
             </div>
           </div>
-          <div className="card">
-            <div className="card-title">
-              <h3>Notes & Summaries</h3>
-            </div>
-            <div className="card-content">
-              {entities && (
-                <div className="col">
-                  {getSortedEntities(entities.note).map((item, index) => (
-                    <div key={index} className={`card ${item.priority_rank === getHighestPriority(entities.note) && item.priority_rank > 0 ? "priority-highlight" : ""}`}>
-                      <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
+        </div>
+        <div className="card">
+          <div className="card-title">
+            <h3>To-do</h3>
+          </div>
+          <div className="card-content">
+            {entities && (
+              <div className="col">
+                {getSortedEntities(entities.todo).map((item, index) => (
+                  <div key={index} className={`card ${item.priority_rank === getHighestPriority(entities.todo) && item.priority_rank > 0 ? "priority-highlight" : ""}`} style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
+                    <div style={{ paddingTop: "0.5rem", flexDirection: "column", display: "flex" }}>
+                      <input type="checkbox" />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                      <div style={{ display: "flex", flexDirection: "row", gap: "1rem", alignItems: "center", width: "100%" }}>
                         <span>{formatDate(item.created_at)}</span>
-                        <button style={{ width: "1.5rem", height: "1.5rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>
+                        <span className="priority-label">{item.priority_rank ?? 0}/5 Priority</span>
+                        <button style={{ width: "1.5rem", height: "1.5rem", padding: "0", marginLeft: "auto" }} onClick={() => deleteEntity(item.id)}>
                           X
                         </button>
                       </div>
-                      {/* <div>
+                      <p>{item.content}</p>
+                      <span>Due: {item.date}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-title">
+            <h3>Notes & Summaries</h3>
+          </div>
+          <div className="card-content">
+            {entities && (
+              <div className="col">
+                {getSortedEntities(entities.note).map((item, index) => (
+                  <div key={index} className={`card ${item.priority_rank === getHighestPriority(entities.note) && item.priority_rank > 0 ? "priority-highlight" : ""}`}>
+                    <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
+                      <span>{formatDate(item.created_at)}</span>
+                      <button style={{ width: "1.5rem", height: "1.5rem", padding: "0" }} onClick={() => deleteEntity(item.id)}>
+                        X
+                      </button>
+                    </div>
+                    {/* <div>
                       <span className="priority-label">Priority: {item.priority_rank ?? 0}</span>
                     </div> */}
-                      <div>
-                        <p>{item.content}</p>
-                      </div>
+                    <div>
+                      <p>{item.content}</p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <div className="card" style={{ display: "none" }}>

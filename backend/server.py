@@ -71,7 +71,7 @@ def send_all_entries(sid):
 
 def send_all_queries(sid):
     print("client request all queries:", sid)
-    data = query_db("SELECT id, query, response, created_at, session_id FROM queries")
+    data = query_db("SELECT id, query, response, created_at, session_id FROM queries ORDER BY created_at DESC LIMIT 10")
     sio.emit("all_queries", data, to=sid)
 
 
