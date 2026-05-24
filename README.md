@@ -79,6 +79,8 @@ npm i
 - [x] Delete items
 - [x] query llm about entries in the database in a chat interface
 - [x] embed entities to be able to search through them for answering queries
-- [ ] remove queries from database? storing them is unecessary unless we store answers as well
-- [ ] entries may not need to be stored either because the entity is already extracted?
 - [ ] include text files as context/notes
+- [x] store queries & responses as pairs in database
+- [x] fetch & display queries & responses on frontend on load
+- [x] load sentence transformer model locally instead of fetching config files from web
+- [x] add LLM overview that outlines current tasks
