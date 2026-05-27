@@ -260,8 +260,8 @@ function App() {
             {queries && (
               <div className="col">
                 {queries.slice().map((item, index) => (
-                  <div key={index}>
-                    <span style={{ backgroundColor: "var(--bg-d1)", padding: "0.25rem 0.5rem", borderRadius: "0.5rem" }}> {item.query} </span>
+                  <div key={index} className="col" style={{ gap: "0.25rem" }}>
+                    <p style={{ backgroundColor: "var(--bg-d1)", padding: "0 0.5rem", borderRadius: "0.5rem", width: "fit-content" }}> {item.query} </p>
                     <p> {item.response} </p>
                   </div>
                 ))}
@@ -302,7 +302,7 @@ function App() {
               {getSortedEntities(entities.note).map((item, index) => (
                 <div key={index} className="item">
                   <div className="content">
-                    <span>{formatDate(item.created_at)}</span>
+                    <p>{formatDate(item.created_at)}</p>
                     <button style={{ backgroundImage: "url(./x.svg)", backgroundSize: "1rem" }} onClick={() => deleteEntity(item.id)}></button>
                     <p>{item.content}</p>
                   </div>
