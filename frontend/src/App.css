@@ -4,6 +4,9 @@
   padding: 2rem;
   height: 1.25rem;
   align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .topnav img {
@@ -31,7 +34,7 @@ input[type="text"] {
   color: var(--text-color);
   border: none;
   flex-grow: 1;
-  font-size: 0.875;
+  font-size: 0.875rem;
   font-weight: 400;
   transition: 80ms;
 }
@@ -45,8 +48,7 @@ input[type="text"]:focus {
   overflow: hidden;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
+  grid-template-columns: 2fr 1fr;
   gap: 4rem;
   flex-grow: 1;
 }
@@ -90,7 +92,11 @@ button.small:hover {
 }
 
 button.accent {
-  background-color: #d3e4fd;
+  background-color: var(--accent);
+}
+
+button.accent:hover {
+  background-color: var(--accent-d);
 }
 
 button.clear {
@@ -140,6 +146,7 @@ input[type="checkbox"] {
   height: 1rem;
   margin: 0;
 }
+
 
 .success,
 .online {

@@ -12,9 +12,13 @@
 
   --heading-color: #101010;
   --text-color: #505050;
+  --text-light: #909090;
   background-color: var(--bg);
   color: var(--text-color);
   --orange: #f3a155;
+  --accent: #d3e4fd;
+  --accent-d: #b3cff8;
+  --red: #fdd3d3;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

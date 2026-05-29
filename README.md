@@ -1,6 +1,7 @@
 # AT CS Project
 
 App that transcribes the user's microphone input and then summarizes the content in a web interface.
+The goal is to format unstructured user input of notes or tasks into structured data that can be displayed in a useful way. Automatic overviews are generated and the app serves as an infinite repository of the users memory.
 
 ## Installation instructions
 
@@ -84,3 +85,7 @@ npm i
 - [x] fetch & display queries & responses on frontend on load
 - [x] load sentence transformer model locally instead of fetching config files from web
 - [x] add LLM overview that outlines current tasks
+- [ ] rework frontend user interface
+- [ ] add ability to change status of todos
+- [ ] update frontend when deleting entities
+- [ ] allow parallel processing to prevent crashing when multiple overviews are requested or multiple entries are trying to be processed at once

@@ -227,9 +227,9 @@ function App() {
   return (
     <>
       <div className="topnav">
-        <img src="./wordmark.svg" alt="" />
+        <img src="./logo.svg" alt="" />
         <div className="center">
-          <input value={entryInputValue} onChange={(e) => setEntryInputValue(e.target.value)} className="message-input" type="text" placeholder="Type data here" />
+          <input value={entryInputValue} onChange={(e) => setEntryInputValue(e.target.value)} className="message-input" type="text" placeholder="Enter data here" />
           <button
             style={{ backgroundImage: `url(./${micOn ? "mic" : "mic-off"}.svg)`, backgroundColor: `${micOn ? "var(--orange)" : ""}` }}
             onClick={() => {
@@ -238,88 +238,97 @@ function App() {
           ></button>
           <button className="accent" onClick={() => sendEntry(entryInputValue)} style={{ backgroundImage: "url(./arrow-up.svg)" }}></button>
         </div>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <span className={connected ? "online" : "offline"}>• {connected ? "Connected" : "Not connected"}</span>
+          {status.map((s, index) => (
+            <span key={index} className={s.toLowerCase().replaceAll(" ", "-")}>
+              • {s}
+            </span>
+          ))}
+        </div>
       </div>
       <div className="main">
-        <div className="section">
-          <h2>Today is {date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h2>
-          <p>{overviewLoading ? "Loading..." : overviewStr}</p>
-          <button
-            className="small"
-            onClick={() => {
-              setOverviewLoading(true);
-              socket.emit("generate_overview");
-            }}
-          >
-            Generate Overview
-          </button>
-        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4rem" }}>
+          <div className="section">
+            <h2>Today is {date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h2>
+            <div style={{ padding: "1rem", backgroundColor: "var(--bg-d1)", borderRadius: "1rem" }}>
+              <p style={{ whiteSpace: "pre-wrap" }}>{overviewLoading ? "Loading..." : overviewStr}</p>
+            </div>
+            <button
+              className="small"
+              onClick={() => {
+                setOverviewLoading(true);
+                socket.emit("generate_overview");
+              }}
+            >
+              Generate New Overview
+            </button>
+          </div>
 
-        <div className="section">
-          <h2>Chat</h2>
-          <div style={{ overflow: "auto", maxHeight: "30vh" }}>
-            {queries && (
+          <div className="section">
+            <h2>Tasks</h2>
+            {entities && (
               <div className="col">
-                {queries.slice().map((item, index) => (
-                  <div key={index} className="col" style={{ gap: "0.25rem" }}>
-                    <p style={{ backgroundColor: "var(--bg-d1)", padding: "0 0.5rem", borderRadius: "0.5rem", width: "fit-content" }}> {item.query} </p>
-                    <p> {item.response} </p>
+                {getSortedEntities(entities.todo).map((item, index) => (
+                  <div key={index} className="item">
+                    <div>
+                      <input type="checkbox" />
+                    </div>
+                    <div className="content">
+                      {/* <p>{formatDate(item.created_at)}</p> */}
+                      {/* <p className="priority-label">{item.priority_rank ?? 0}/5 Priority</p> */}
+                      <button onClick={() => deleteEntity(item.id)} style={{ backgroundImage: "url(./x.svg)", backgroundSize: "1rem", backgroundColor: "var(--red)" }}></button>
+                      <p style={{ marginTop: "-0.25rem" }}>{item.content}</p>
+                      <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>Due {item.date}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <input value={queryInputValue} onChange={(e) => setQueryInputValue(e.target.value)} className="message-input" type="text" placeholder="Type question here" />
-            <button style={{ backgroundImage: "url(./arrow-up.svg)" }} className="accent" onClick={() => sendQuery(queryInputValue)}></button>
+          <div className="section">
+            <h2>Notes</h2>
+            {entities && (
+              <div className="col">
+                {getSortedEntities(entities.note).map((item, index) => (
+                  <div key={index} className="item">
+                    <div className="content">
+                      <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>{formatDate(item.created_at)}</p>
+                      <button style={{ backgroundImage: "url(./x.svg)", backgroundSize: "1rem", backgroundColor: "var(--red)" }} onClick={() => deleteEntity(item.id)}></button>
+                      <p>{item.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="section">
-          <h2>Tasks</h2>
-          {entities && (
-            <div className="col">
-              {getSortedEntities(entities.todo).map((item, index) => (
-                <div key={index} className="item">
-                  <div>
-                    <input type="checkbox" />
-                  </div>
-                  <div className="content">
-                    <p>{formatDate(item.created_at)}</p>
-                    <p className="priority-label">{item.priority_rank ?? 0}/5 Priority</p>
-                    <button onClick={() => deleteEntity(item.id)} style={{ backgroundImage: "url(./x.svg)", backgroundSize: "1rem" }}></button>
-                    <p>{item.content}</p>
-                    <p>Due: {item.date}</p>
-                  </div>
+        <div>
+          <div className="section">
+            <h2>Chat</h2>
+            <div style={{ overflow: "auto", maxHeight: "70vh", backgroundColor: "var(--bg-d1)", borderRadius: "1rem", padding: "1rem" }}>
+              {queries && (
+                <div className="col" style={{ gap: "2rem" }}>
+                  {queries.slice().map((item, index) => (
+                    <div key={index} className="col" style={{ gap: "0.25rem" }}>
+                      <p style={{ backgroundColor: "var(--accent)", padding: "0 0.5rem", borderRadius: "0.5rem", width: "fit-content" }}> {item.query} </p>
+                      <p style={{ whiteSpace: "pre-wrap" }}> {item.response} </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
-        <div className="section">
-          <h2>Notes</h2>
-          {entities && (
-            <div className="col">
-              {getSortedEntities(entities.note).map((item, index) => (
-                <div key={index} className="item">
-                  <div className="content">
-                    <p>{formatDate(item.created_at)}</p>
-                    <button style={{ backgroundImage: "url(./x.svg)", backgroundSize: "1rem" }} onClick={() => deleteEntity(item.id)}></button>
-                    <p>{item.content}</p>
-                  </div>
-                </div>
-              ))}
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <input value={queryInputValue} onChange={(e) => setQueryInputValue(e.target.value)} className="message-input" type="text" placeholder="Type question here" />
+              <button style={{ backgroundImage: "url(./arrow-up.svg)" }} className="accent" onClick={() => sendQuery(queryInputValue)}></button>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
       {/* <div className="bottom-nav">
-        <span className={connected ? "online" : "offline"}>• {connected ? "Connected" : "Not connected"}</span>
-        {status.map((s, index) => (
-          <span key={index} className={s.toLowerCase().replaceAll(" ", "-")}>
-            • {s}
-          </span>
-        ))}
+        
         {appData && (
           <>
             <span>v{appData.version}</span>

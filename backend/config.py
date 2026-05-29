@@ -15,12 +15,11 @@ Set priority_rank as an integer from 0 to 5, where 5 is highest priority and 0 i
 Only ever respond with JSON formatted as follows. It must be wrapped in an array even if there is only 1 response object.
 Do not use the context to generate new items, only to support the new entry data as background context or to answer questions.
 For notes, if the topics are related they can remain in one note with a title.
-{"type": "todo" | "note" , "content": "text here", "status": "status if applicable, otherwise empty string", "date": "deadline or date if applicable, otherwise empty string", "priority_rank": 0-5}
+{"type": "todo" | "note" , "content": "content here, remove any information about date or deadline and put in the date field instead", "status": "status if applicable, otherwise empty string", "date": "deadline or date if applicable, otherwise empty string", "priority_rank": 0-5}
 """
 
 QUERY_PROMPT = """
-You are a helpful productivity assistant.
-Answer the user's query directly and concisely.
+You are a helpful productivity assistant. Answer the user's query directly and concisely.
 """
 
 OVERVIEW_PROMPT = """
