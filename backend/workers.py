@@ -19,6 +19,9 @@ llm_queue = queue.Queue()
 
 audio_on = threading.Event()
 
+# lock to prevent concurrent LLM access (llama-cpp is not thread-safe)
+llm_lock = threading.Lock()
+
 
 def toggle_audio(on):
     '''
@@ -223,13 +226,15 @@ def process_entry(content):
     yesterday_str = yesterday.strftime("%Y %m %d %A")
     tomorrow_str = tomorrow.strftime("%Y %m %d %A")
 
-    output = llm.create_chat_completion(
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"Yesterday: {yesterday_str}, Today: {today_str}, Tomorrow: {tomorrow_str}, Content: {content}"}
-        ],
-        temperature=0.2
-    )
+    # Acquire lock to ensure only one LLM operation at a time
+    with llm_lock:
+        output = llm.create_chat_completion(
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"Yesterday: {yesterday_str}, Today: {today_str}, Tomorrow: {tomorrow_str}, Content: {content}"}
+            ],
+            temperature=0.2
+        )
     remove_status("Processing")
     return (output['choices'][0]['message']['content'])
 
@@ -261,13 +266,15 @@ def query_llm(content):
     yesterday_str = yesterday.strftime("%Y %m %d %A")
     tomorrow_str = tomorrow.strftime("%Y %m %d %A")
 
-    output = llm.create_chat_completion(
-        messages=[
-            {"role": "system", "content": QUERY_PROMPT},
-            {"role": "user", "content": f"Yesterday: {yesterday_str}, Today: {today_str}, Tomorrow: {tomorrow_str}, Query: {content}"}
-        ],
-        temperature=0.2
-    )
+    # Acquire lock to ensure only one LLM operation at a time
+    with llm_lock:
+        output = llm.create_chat_completion(
+            messages=[
+                {"role": "system", "content": QUERY_PROMPT},
+                {"role": "user", "content": f"Yesterday: {yesterday_str}, Today: {today_str}, Tomorrow: {tomorrow_str}, Query: {content}"}
+            ],
+            temperature=0.2
+        )
     return (output['choices'][0]['message']['content'])
 
 

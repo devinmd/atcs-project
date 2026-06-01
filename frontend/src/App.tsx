@@ -251,7 +251,7 @@ function App() {
         <div style={{ display: "flex", flexDirection: "column", gap: "4rem" }}>
           <div className="section">
             <h2>Today is {date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h2>
-            <div style={{ padding: "1rem", backgroundColor: "var(--bg-d1)", borderRadius: "1rem" }}>
+            <div style={{ padding: "1rem", backgroundColor: "var(--bg-d1)", borderRadius: "1rem" , minHeight:"4rem"}}>
               <p style={{ whiteSpace: "pre-wrap" }}>{overviewLoading ? "Loading..." : overviewStr}</p>
             </div>
             <button
@@ -268,7 +268,14 @@ function App() {
           <div className="section">
             <h2>Tasks</h2>
             {entities && (
-              <div className="col">
+              <div
+                className="col"
+                style={{
+                  padding: "1rem",
+                  borderRadius: "1rem",
+                  backgroundColor: "var(--bg-d1)",
+                }}
+              >
                 {getSortedEntities(entities.todo).map((item, index) => (
                   <div key={index} className="item">
                     <div>
@@ -277,7 +284,7 @@ function App() {
                     <div className="content">
                       {/* <p>{formatDate(item.created_at)}</p> */}
                       {/* <p className="priority-label">{item.priority_rank ?? 0}/5 Priority</p> */}
-                      <button onClick={() => deleteEntity(item.id)} style={{ backgroundImage: "url(./x.svg)", backgroundSize: "1rem", backgroundColor: "var(--red)" }}></button>
+                      <button onClick={() => deleteEntity(item.id)} style={{ backgroundImage: "url(./trash.svg)", backgroundSize: "1rem", backgroundColor: "var(--red)" }}></button>
                       <p style={{ marginTop: "-0.25rem" }}>{item.content}</p>
                       <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>Due {item.date}</p>
                     </div>
@@ -289,12 +296,19 @@ function App() {
           <div className="section">
             <h2>Notes</h2>
             {entities && (
-              <div className="col">
+              <div
+                className="col"
+                style={{
+                  padding: "1rem",
+                  borderRadius: "1rem",
+                  backgroundColor: "var(--bg-d1)",
+                }}
+              >
                 {getSortedEntities(entities.note).map((item, index) => (
                   <div key={index} className="item">
                     <div className="content">
                       <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>{formatDate(item.created_at)}</p>
-                      <button style={{ backgroundImage: "url(./x.svg)", backgroundSize: "1rem", backgroundColor: "var(--red)" }} onClick={() => deleteEntity(item.id)}></button>
+                      <button style={{ backgroundImage: "url(./trash.svg)", backgroundSize: "1rem", backgroundColor: "var(--red)" }} onClick={() => deleteEntity(item.id)}></button>
                       <p>{item.content}</p>
                     </div>
                   </div>
@@ -309,7 +323,7 @@ function App() {
             <h2>Chat</h2>
             <div style={{ overflow: "auto", maxHeight: "70vh", backgroundColor: "var(--bg-d1)", borderRadius: "1rem", padding: "1rem" }}>
               {queries && (
-                <div className="col" style={{ gap: "2rem" }}>
+                <div className="col" style={{ gap: "2rem", paddingBottom: "8rem", backgroundColor: "var(--bg-d1)" }}>
                   {queries.slice().map((item, index) => (
                     <div key={index} className="col" style={{ gap: "0.25rem" }}>
                       <p style={{ backgroundColor: "var(--accent)", padding: "0 0.5rem", borderRadius: "0.5rem", width: "fit-content" }}> {item.query} </p>
