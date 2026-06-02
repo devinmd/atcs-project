@@ -29,18 +29,14 @@ Write a short, natural daily productivity overview.
 
 Rules:
 - Output ONLY the final response
+- Answer directly
+- NEVER say "based on the provided data"
 - No reasoning
 - No explanations
 - No analysis
 - No introductions
 - No conclusions
 - No references to the input
-- No phrases like:
-  - "Based on"
-  - "It seems"
-  - "The data"
-  - "We need to"
-  - "Here are"
 
 If there are no important tasks, output exactly:
 No important tasks right now.

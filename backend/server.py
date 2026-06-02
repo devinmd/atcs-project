@@ -2,6 +2,7 @@ import json
 import sqlite3
 import threading
 import socketio
+from datetime import date, datetime, timedelta
 from config import *
 from werkzeug.serving import make_server
 from store import add_entity, add_entry, get_entries, add_entities, add_query
@@ -23,6 +24,47 @@ def add_status(activity):
         if activity not in current_status:
             current_status.append(activity)
         sio.emit("status", {"status": list(current_status)})
+
+
+def format_entity_date(date_value):
+    """Format a date value as Today/Yesterday/Tomorrow or 'Tue, May 26, 2026'.
+
+    If the value can't be parsed, return it unchanged as a string.
+    """
+    if not date_value:
+        return ""
+
+    # normalize to string for parsing
+    try:
+        if isinstance(date_value, datetime):
+            dt = date_value
+        else:
+            s = str(date_value)
+            try:
+                dt = datetime.fromisoformat(s)
+            except Exception:
+                dt = None
+                for fmt in ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%m/%d/%Y", "%b %d, %Y"):
+                    try:
+                        dt = datetime.strptime(s, fmt)
+                        break
+                    except Exception:
+                        continue
+                if dt is None:
+                    return s
+
+        d = dt.date()
+    except Exception:
+        return str(date_value)
+
+    today = date.today()
+    if d == today:
+        return "Today"
+    if d == today - timedelta(days=1):
+        return "Yesterday"
+    if d == today + timedelta(days=1):
+        return "Tomorrow"
+    return d.strftime("%a, %b %d, %Y")
 
 
 def remove_status(activity):
@@ -71,7 +113,8 @@ def send_all_entries(sid):
 
 def send_all_queries(sid):
     print("client request all queries:", sid)
-    data = query_db("SELECT id, query, response, created_at, session_id FROM queries ORDER BY created_at DESC LIMIT 10")
+    data = query_db(
+        "SELECT id, query, response, created_at, session_id FROM queries ORDER BY created_at DESC LIMIT 10")
     sio.emit("all_queries", data, to=sid)
 
 
@@ -132,7 +175,7 @@ def receive_query(sid: str, msg: str):
 
     from workers import query_llm, find_relevant_entities, get_all_entities
     from store import add_query, update_query_response
-    
+
     add_status("Querying")
 
     # store query in database
@@ -144,10 +187,10 @@ def receive_query(sid: str, msg: str):
 
     # perhaps get some context from entries
     response = query_llm(f"Context: {relevant_entities}\nQuery: {msg}")
-    
+
     # store response in database
     update_query_response(query_id, response)
-    
+
     # emit response directly to frontend
     sio.emit("query_response", {"query": msg, "response": response}, to=sid)
     remove_status("Querying")
@@ -163,6 +206,12 @@ def generate_overview(sid: str):
     all_entities = get_all_entities()
     relevant_entities = find_relevant_entities(
         OVERVIEW_PROMPT, 5, all_entities)
+
+    # Format the `date` field for each relevant entity as requested
+    for ent in relevant_entities:
+        if "date" in ent and ent["date"]:
+            ent["date"] = format_entity_date(ent["date"])
+
     response = query_llm(f"{relevant_entities}")
     sio.emit("overview_response", response, to=sid)
     remove_status("Querying")

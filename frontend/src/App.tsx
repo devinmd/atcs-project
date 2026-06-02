@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { socket } from "./socket";
-import { formatDate } from "./helpers";
+import { formatDate, formatDateRelative } from "./helpers";
 
 interface entryData {
   id: number;
@@ -71,6 +71,14 @@ function App() {
   }
 
   function deleteEntity(id: number) {
+    // remove the entity from local state
+    setEntities((prev) => {
+      return {
+        todo: (prev.todo || []).filter((e) => e.id !== id),
+        note: (prev.note || []).filter((e) => e.id !== id),
+      } as allEntities;
+    });
+
     socket.emit("delete_entity", id);
   }
 
@@ -272,6 +280,7 @@ function App() {
                 className="col"
                 style={{
                   padding: "1rem",
+                  minHeight:"4rem",
                   borderRadius: "1rem",
                   backgroundColor: "var(--bg-d1)",
                 }}
@@ -286,7 +295,7 @@ function App() {
                       {/* <p className="priority-label">{item.priority_rank ?? 0}/5 Priority</p> */}
                       <button onClick={() => deleteEntity(item.id)} style={{ backgroundImage: "url(./trash.svg)", backgroundSize: "1rem", backgroundColor: "var(--red)" }}></button>
                       <p style={{ marginTop: "-0.25rem" }}>{item.content}</p>
-                      <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>Due {item.date}</p>
+                      <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>Due {formatDateRelative(item.date)}</p>
                     </div>
                   </div>
                 ))}
@@ -301,6 +310,7 @@ function App() {
                 style={{
                   padding: "1rem",
                   borderRadius: "1rem",
+                  minHeight:"4rem",
                   backgroundColor: "var(--bg-d1)",
                 }}
               >
