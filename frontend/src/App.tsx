@@ -86,6 +86,16 @@ function App() {
     const trimmed = text.trim();
     if (!trimmed) return;
     setQueryInputValue("");
+    setQueries((prev) => [
+      {
+        id: Date.now(),
+        query: trimmed,
+        response: null,
+        created_at: new Date().toISOString(),
+        session_id: 0,
+      },
+      ...prev,
+    ].slice(0, 10));
     socket.emit("receive_query", trimmed);
   }
 
@@ -125,7 +135,7 @@ function App() {
           return next;
         }
 
-        return [...prev, { id: Date.now(), query: data.query, response: data.response, created_at: new Date().toISOString(), session_id: 0 }].slice(-10);
+        return [{ id: Date.now(), query: data.query, response: data.response, created_at: new Date().toISOString(), session_id: 0 }, ...prev].slice(0, 10);
       });
     }
 
@@ -142,7 +152,15 @@ function App() {
 
     // add to query list
     function onUpdateQueries(data: queryData) {
-      setQueries((prev) => [...prev, data].slice(-10));
+      setQueries((prev) => {
+        const pendingIndex = prev.findIndex((item) => item.query === data.query && item.response === null);
+        if (pendingIndex !== -1) {
+          const next = [...prev];
+          next[pendingIndex] = data;
+          return next;
+        }
+        return [data, ...prev].slice(0, 10);
+      });
     }
 
     // add to entity list
@@ -207,9 +225,21 @@ function App() {
   return (
     <>
       <div className="topnav">
-        <img src="./logo.svg" alt="" />
+        <img src="./wordmark.svg" alt="" />
         <div className="center">
-          <input value={entryInputValue} onChange={(e) => setEntryInputValue(e.target.value)} className="message-input" type="text" placeholder="Enter data here" />
+          <input
+            value={entryInputValue}
+            onChange={(e) => setEntryInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                sendEntry(entryInputValue);
+              }
+            }}
+            className="message-input"
+            type="text"
+            placeholder="Enter data here"
+          />
           <button
             style={{ backgroundImage: `url(./${micOn ? "mic" : "mic-off"}.svg)`, backgroundColor: `${micOn ? "var(--orange)" : ""}` }}
             onClick={() => {
@@ -232,15 +262,7 @@ function App() {
           <div className="section">
             <h2>Today is {date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h2>
             <div style={{ padding: "1rem", backgroundColor: "var(--bg-d1)", borderRadius: "1rem", minHeight: "4rem" }}>
-              <p style={{ whiteSpace: "pre-wrap" }}>
-                {overviewLoading
-                  ? "Loading..."
-                  : !connected
-                  ? "Not connected"
-                  : overviewStr
-                  ? renderMarkdownBold(overviewStr)
-                  : "No overview available"}
-              </p>
+              <p style={{ whiteSpace: "pre-wrap" }}>{overviewLoading ? "Loading..." : !connected ? "Not connected" : overviewStr ? renderMarkdownBold(overviewStr) : "No overview available"}</p>
             </div>
             <button
               className="small"
@@ -326,34 +348,40 @@ function App() {
                 <p>No chats</p>
               ) : (
                 <div className="col" style={{ gap: "2rem", paddingBottom: "8rem", backgroundColor: "var(--bg-d1)" }}>
-                  {queries.slice().reverse().map((item, index) => (
-                    <div key={index} className="col" style={{ gap: "0.25rem" }}>
-                      <p style={{ backgroundColor: "var(--accent)", padding: "0 0.5rem", borderRadius: "0.5rem", width: "fit-content" }}> {item.query} </p>
-                      <p style={{ whiteSpace: "pre-wrap" }}>{renderMarkdownBold(item.response || "")}</p>
-                    </div>
-                  ))}
+                  {queries
+                    .slice()
+                    .reverse()
+                    .map((item, index) => (
+                      <div key={index} className="col" style={{ gap: "0.25rem" }}>
+                        <p style={{ backgroundColor: "var(--accent)", padding: "0 0.5rem", borderRadius: "0.5rem", width: "fit-content" }}> {item.query} </p>
+                        <p style={{ whiteSpace: "pre-wrap" }}>
+                          {item.response === null ? "Loading..." : renderMarkdownBold(item.response)}
+                        </p>
+                      </div>
+                    ))}
                   <div ref={chatEndRef} />
                 </div>
               )}
             </div>
             <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input value={queryInputValue} onChange={(e) => setQueryInputValue(e.target.value)} className="message-input" type="text" placeholder="Type question here" />
+              <input
+                value={queryInputValue}
+                onChange={(e) => setQueryInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    sendQuery(queryInputValue);
+                  }
+                }}
+                className="message-input"
+                type="text"
+                placeholder="Type question here"
+              />
               <button style={{ backgroundImage: "url(./arrow-up.svg)" }} className="accent" onClick={() => sendQuery(queryInputValue)}></button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* <div className="bottom-nav">
-        
-        {appData && (
-          <>
-            <span>v{appData.version}</span>
-            <span>{appData.model}</span>
-            <span>{appData.microphone}</span>
-          </>
-        )}
-      </div> */}
     </>
   );
 }

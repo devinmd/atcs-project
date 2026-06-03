@@ -233,6 +233,7 @@ def process_entry(content):
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": f"Yesterday: {yesterday_str}, Today: {today_str}, Tomorrow: {tomorrow_str}, Content: {content}"}
             ],
+            max_tokens=1024,
             temperature=0.2
         )
     llm.reset()  # Clear the KV cache
@@ -278,7 +279,7 @@ def query_llm(content):
                     "role": "user", "content": f""" Yesterday's date: {yesterday_str} Today's date: {today_str} Tomorrow's date: {tomorrow_str} Tasks: {content_json} """
                 }
             ],
-            max_tokens=128,
+            max_tokens=1024,
             temperature=0.2
         )
     llm.reset()  # Clear the KV cache

@@ -39,15 +39,11 @@ curl -LsSf https://hf.co/cli/install.sh | bash
 
 ### Install Model .gguf in `/backend` using Hugging Face
 
-Llama 3.2 8B Instruct IQ4 XS (~4 GB)
-
 ```shell
-hf download mradermacher/Llama-3.2-8B-Instruct-GGUF \
-  --include "Llama-3.2-8B-Instruct.IQ4_XS.gguf" \
-  --local-dir models/llama3.2
+hf download unsloth/gemma-4-E4B-it-GGUF \
+  --include "gemma-4-E4B-it-Q4_K_M.gguf" \
+  --local-dir models/gemma4
 ```
-
-The less quantized versions of Llama 3.2 8B Instruct take far too long to generate responses. Llama 3.2 1B Instruct is faster but does not work well due to its low accuracy.
 
 ### Install node modules in `/frontend`
 
@@ -101,7 +97,7 @@ npm i
 - [x] fetch & display queries & responses on frontend on load
 - [x] load sentence transformer model locally instead of fetching config files from web
 - [x] add LLM overview that outlines current tasks
-- [ ] rework frontend user interface
+- [x] rework frontend user interface
 - [ ] add ability to change status of todos
 - [ ] update frontend when deleting entities
 - [x] switch to using a Gemma 4 model instead of Llama
