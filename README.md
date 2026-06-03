@@ -2,7 +2,9 @@
 
 A local, privacy-first assistant for capturing spoken or typed input and turning it into structured memory: notes, tasks, and searchable context.
 
-The app extracts entities from incoming text, embeds them locally, and uses those embeddings to answer queries and generate overviews.
+The app extracts entities from incoming text, embeds them locally, and uses those embeddings to answer queries and generate overviews, acting as your personal second brain.
+
+![image](./screenshot.png)
 
 ## Features
 - Real-time transcription and structured extraction
