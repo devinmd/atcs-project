@@ -1,104 +1,87 @@
-# AT CS Project
+# Restructure
 
-A local, privacy-first assistant that can listen, transcribe, and accept typed inputs to convert into structured memory (notes & tasks). The app embeds and indexes extracted entities so you can query your brain and generate automatic overviews.
+A local, privacy-first assistant for capturing spoken or typed input and turning it into structured memory: notes, tasks, and searchable context.
+
+The app extracts entities from incoming text, embeds them locally, and uses those embeddings to answer queries and generate overviews.
 
 ## Features
-- Real-time transcription and extraction
-- Automatic data structuring: Local LLM converts transcriptions and text into structured tasks and notes
-- Semantic search & querying: Sentence-transformer embeddings find relevant memories
-- Overview generation: LLM produces daily overviews
-- Web UI: Frontend Web UI allows for data entry and viewing
-
-## Usage
-- Use the microphone button to speak or type text into the main entry box
-- The backend converts these into structured tasks or notes and embeds them
-- Use the chat to query your memories and data, relevant entities are sent to the LLM to generate 
-- Daily overview is generated from relevant entities
+- Real-time transcription and structured extraction
+- Local LLM converts speech/text into tasks and notes
+- Semantic memory search using sentence-transformer embeddings
+- Auto-generated overviews based on relevant memories
+- React + Vite frontend with live socket updates
 
 ## Architecture
-- Backend: Python server handling audio, transcription, embeddings, LLM calls, and SQLite DB
-- Frontend: Vite + React connected to backend using socket.io
+- Backend: Python server with audio/transcription support, embeddings, local LLM calls, and SQLite storage
+- Frontend: Vite + React app communicating over socket.io
 
-## Installation instructions
+## Installation
 
-### Install Python
+### Prerequisites
 
-MacOS (Homebrew)
+- Python installed
+- Node.js installed
+- Hugging Face CLI for model downloads
+  
+### Install frontend dependencies
 
-```
-brew install python
-```
+In `/frontend`
 
-### Install Hugging Face CLI (to download models)
-
-MacOS
-
-```
-curl -LsSf https://hf.co/cli/install.sh | bash
+```sh
+npm install
 ```
 
-### Install Model .gguf in `/backend` using Hugging Face
+### Download model
 
-```shell
+In `/backend`
+
+```sh
 hf download unsloth/gemma-4-E4B-it-GGUF \
   --include "gemma-4-E4B-it-Q4_K_M.gguf" \
   --local-dir models/gemma4
 ```
 
-### Install node modules in `/frontend`
+## Running the app
 
-Ensure Node.js is installed
+1. Initialize the database once from `/backend` by running `db.py`
+2. Start the backend server from `/backend` by running `main.py`
+3. Start the frontend from `/frontend` by running `npm run dev`
+4. Open the address shown in the terminal in a web browser
 
-```shell
-npm i
-```
-
-## Usage
-
-1. Run `db.py` in `/backend` once to initialize the database
-
-2. Run `main.py` in `/backend` to run the app and host server
-
-3. Run `npm run dev` in `/frontend` to host the web interface
-
-4. Navigate to `localhost:PORT` in any web browser to access the web interface (PORT is whatever port # showed up in the console after running the frontend webserver)
-
-## Data Pipeline
+## How it works
 
 ### Data entry
-
-1. Entry (Speech or text, speech is transcribed)
-2. Converted to an entity (formatted data with deadlines, status, etc. extracted) using a local LLM
-3. Entity is embedded using sentence-transformer
-4. Entry and Entity are stored to a local database
-5. Entry and Entity are displayed on the frontend
+1. User types into the entry box or speaks
+2. speech is transcribed and text is parsed
+3. Local LLM extracts structured entities (tasks, notes, due dates, etc.)
+4. Entities are embedded and stored locally in an SQLite database
+5. The frontend displays the tasks & notes
 
 ### Querying
 
-1. User sends a query
-2. Query is embedded using sentence-transformer
-3. Top relevant entities are found using the embeddings and cosine similiarity
-4. Relevant entities & query are passed to the local LLM to generate an answer
-5. Query and answer are displayed on the frontend
+1. User asks a question in chat
+2. The query is embedded locally
+3. Relevant entities are retrieved (using the embeddings)
+4. The query and entities are passed to the local LLM
+5. Response is generated and displayed on the frontend
 
-## Todo Checklist
+## Checklist
 
-- [x] Host webserver for a backend
-- [x] Host webserver for frontned GUI
-- [x] Use faster-whisper instead of vosk
-- [x] Use websockets instead of http requests for the web GUI for decreased latncy and bidirectional communication
-- [x] Run listening, transcribing, and processing in separate threads to prevent blocking
-- [x] Send events from the backend to update the frontend when new data is received
+- [x] Backend webserver
+- [x] Frontend GUI
+- [x] Faster transcription pipeline (whisper instead of vosk)
+- [ ] Switch to websockets from HTTP for decreased latncy and bidirectional communication
+- [x] Update frontend live as data is processed using websocket
+- [x] Background processing for non-blocking input handling for listening, transcribing, and processing
 - [x] Delete items
-- [x] query llm about entries in the database in a chat interface
-- [x] embed entities to be able to search through them for answering queries
-- [ ] include text files as context/notes
-- [x] store queries & responses as pairs in database
-- [x] fetch & display queries & responses on frontend on load
-- [x] load sentence transformer model locally instead of fetching config files from web
-- [x] add LLM overview that outlines current tasks
-- [x] rework frontend user interface
-- [ ] add ability to change status of todos
-- [ ] update frontend when deleting entities
-- [x] switch to using a Gemma 4 model instead of Llama
-- [ ] allow parallel processing to prevent crashing when multiple overviews are requested or multiple entries are trying to be processed at once
+- [x] Query LLM over stored data in a chat interface
+- [x] Local embedding-based retrieval for query context
+- [ ] Include text files as context/notes
+- [x] Store query-response pairs in the database
+- [x] Load sentence-transformer model locally
+- [x] LLM-generated overview from current tasks
+- [x] Updated frontend UI
+- [ ] Toggle todo status
+- [x] Update frontend after entity deletion
+- [x] Use Gemma 4 model instead of Llama
+- [x] Fix bug where sending multiple queries would crash the program
