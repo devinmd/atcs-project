@@ -38,6 +38,12 @@ type allEntities = Record<EntityType, entityData[]>;
 
 function App() {
   const date = new Date();
+  const greeting = (() => {
+    const hour = date.getHours();
+    if (hour >= 4 && hour < 12) return "Good Morning";
+    if (hour >= 12 && hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  })();
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string[]>([]);
   const [queries, setQueries] = useState<queryData[]>([]);
@@ -55,6 +61,47 @@ function App() {
       if (priorityDiff !== 0) return priorityDiff;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
+  }
+
+  function getSortedTasks(items: entityData[]) {
+    return [...items].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : Infinity;
+      const dateB = b.date ? new Date(b.date).getTime() : Infinity;
+      if (dateA !== dateB) return dateA - dateB;
+      const priorityDiff = (b.priority_rank || 0) - (a.priority_rank || 0);
+      if (priorityDiff !== 0) return priorityDiff;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }
+
+  function getTaskGroups(items: entityData[]) {
+    const today = new Date();
+    const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dayAfterTomorrow = new Date(todayMid);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+    const nextWeekEnd = new Date(todayMid);
+    nextWeekEnd.setDate(nextWeekEnd.getDate() + 8);
+
+    const groups: { label: string; items: entityData[] }[] = [
+      { label: "Urgent", items: [] },
+      { label: "Soon", items: [] },
+      { label: "Later", items: [] },
+    ];
+
+    getSortedTasks(items).forEach((item) => {
+      const due = item.date ? new Date(item.date) : null;
+      const dueMid = due ? new Date(due.getFullYear(), due.getMonth(), due.getDate()) : null;
+
+      if (!dueMid || dueMid >= nextWeekEnd) {
+        groups[2].items.push(item);
+      } else if (dueMid >= dayAfterTomorrow) {
+        groups[1].items.push(item);
+      } else {
+        groups[0].items.push(item);
+      }
+    });
+
+    return groups.filter((group) => group.items.length > 0);
   }
 
   function deleteEntity(id: number) {
@@ -86,16 +133,18 @@ function App() {
     const trimmed = text.trim();
     if (!trimmed) return;
     setQueryInputValue("");
-    setQueries((prev) => [
-      {
-        id: Date.now(),
-        query: trimmed,
-        response: null,
-        created_at: new Date().toISOString(),
-        session_id: 0,
-      },
-      ...prev,
-    ].slice(0, 10));
+    setQueries((prev) =>
+      [
+        {
+          id: Date.now(),
+          query: trimmed,
+          response: null,
+          created_at: new Date().toISOString(),
+          session_id: 0,
+        },
+        ...prev,
+      ].slice(0, 10),
+    );
     socket.emit("receive_query", trimmed);
   }
 
@@ -222,12 +271,17 @@ function App() {
     }
   }, [queries]);
 
+  const taskGroups = getTaskGroups(entities.todo);
+
   return (
     <>
       <div className="topnav">
         <img src="./wordmark.svg" alt="" />
         <div className="center">
           <input
+          style={{
+            height:"2rem"
+          }}
             value={entryInputValue}
             onChange={(e) => setEntryInputValue(e.target.value)}
             onKeyDown={(e) => {
@@ -238,7 +292,7 @@ function App() {
             }}
             className="message-input"
             type="text"
-            placeholder="Enter data here"
+            placeholder="Add a task, note, or idea..."
           />
           <button
             style={{ backgroundImage: `url(./${micOn ? "mic" : "mic-off"}.svg)`, backgroundColor: `${micOn ? "var(--orange)" : ""}` }}
@@ -260,7 +314,9 @@ function App() {
       <div className="main">
         <div style={{ display: "flex", flexDirection: "column", gap: "4rem" }}>
           <div className="section">
-            <h2>Today is {date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h2>
+            <h2>
+              {greeting}, Today is {date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+            </h2>
             <div style={{ padding: "1rem", backgroundColor: "var(--bg-d1)", borderRadius: "1rem", minHeight: "4rem" }}>
               <p style={{ whiteSpace: "pre-wrap" }}>{overviewLoading ? "Loading..." : !connected ? "Not connected" : overviewStr ? renderMarkdownBold(overviewStr) : "No overview available"}</p>
             </div>
@@ -281,6 +337,7 @@ function App() {
               className="col"
               style={{
                 padding: "1rem",
+                gap:"2rem",
                 minHeight: "4rem",
                 borderRadius: "1rem",
                 backgroundColor: "var(--bg-d1)",
@@ -288,21 +345,26 @@ function App() {
             >
               {!connected ? (
                 <p>Not connected</p>
-              ) : getSortedEntities(entities.todo).length === 0 ? (
+              ) : taskGroups.length === 0 ? (
                 <p>No tasks</p>
               ) : (
-                getSortedEntities(entities.todo).map((item, index) => (
-                  <div key={index} className="item">
-                    <div>
-                      <input type="checkbox" />
-                    </div>
-                    <div className="content">
-                      {/* <p>{formatDate(item.created_at)}</p> */}
-                      {/* <p className="priority-label">{item.priority_rank ?? 0}/5 Priority</p> */}
-                      <button onClick={() => deleteEntity(item.id)} style={{ backgroundImage: "url(./trash.svg)", backgroundSize: "1rem", backgroundColor: "var(--red)" }}></button>
-                      <p style={{ marginTop: "-0.25rem" }}>{item.content}</p>
-                      <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>Due {formatDateRelative(item.date)}</p>
-                    </div>
+                taskGroups.map((group) => (
+                  <div key={group.label} className="col">
+                    <h4>{group.label}</h4>
+                    {group.items.map((item, index) => (
+                      <div key={`${group.label}-${index}`} className="item">
+                        <div>
+                          <input type="checkbox" />
+                        </div>
+                        <div className="content">
+                          {/* <p>{formatDate(item.created_at)}</p> */}
+                          {/* <p className="priority-label">{item.priority_rank ?? 0}/5 Priority</p> */}
+                          <button onClick={() => deleteEntity(item.id)} style={{ backgroundImage: "url(./trash.svg)", backgroundSize: "1rem", backgroundColor: "var(--red)" }}></button>
+                          <p style={{ marginTop: "-0.25rem" }}>{item.content}</p>
+                          <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>Due {formatDateRelative(item.date)}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ))
               )}
@@ -354,9 +416,7 @@ function App() {
                     .map((item, index) => (
                       <div key={index} className="col" style={{ gap: "0.25rem" }}>
                         <p style={{ backgroundColor: "var(--accent)", padding: "0 0.5rem", borderRadius: "0.5rem", width: "fit-content" }}> {item.query} </p>
-                        <p style={{ whiteSpace: "pre-wrap" }}>
-                          {item.response === null ? "Loading..." : renderMarkdownBold(item.response)}
-                        </p>
+                        <p style={{ whiteSpace: "pre-wrap" }}>{item.response === null ? "Loading..." : renderMarkdownBold(item.response)}</p>
                       </div>
                     ))}
                   <div ref={chatEndRef} />
@@ -375,7 +435,7 @@ function App() {
                 }}
                 className="message-input"
                 type="text"
-                placeholder="Type question here"
+                placeholder="What is due this week?"
               />
               <button style={{ backgroundImage: "url(./arrow-up.svg)" }} className="accent" onClick={() => sendQuery(queryInputValue)}></button>
             </div>

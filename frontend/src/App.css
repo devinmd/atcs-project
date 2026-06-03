@@ -19,6 +19,7 @@
   left: 0;
   right: 0;
   margin: 0 auto;
+  align-items: center;
   display: flex;
   max-width: 640px;
   width: 50vw;
