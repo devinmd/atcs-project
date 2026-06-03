@@ -1,14 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { socket } from "./socket";
-import { formatDate, formatDateRelative } from "./helpers";
-
-interface entryData {
-  id: number;
-  content: string;
-  created_at: string;
-  session_id: number;
-}
+import { formatDate, formatDateRelative, renderMarkdownBold } from "./helpers";
 
 interface queryData {
   id: number;
@@ -42,25 +35,19 @@ interface entityData {
 }
 
 type allEntities = Record<EntityType, entityData[]>;
-interface appData {
-  version: string;
-  microphone: string;
-  model: string;
-}
 
 function App() {
   const date = new Date();
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string[]>([]);
-  const [entries, setEntries] = useState<entryData[]>([]);
   const [queries, setQueries] = useState<queryData[]>([]);
   const [entities, setEntities] = useState<allEntities>({ todo: [], note: [] });
-  const [appData, setAppData] = useState<appData>();
   const [entryInputValue, setEntryInputValue] = useState("");
   const [queryInputValue, setQueryInputValue] = useState("");
   const [micOn, setMicOn] = useState(false);
   const [overviewStr, setOverviewStr] = useState("");
   const [overviewLoading, setOverviewLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   function getSortedEntities(items: entityData[]) {
     return [...items].sort((a, b) => {
@@ -117,11 +104,6 @@ function App() {
       setStatus(data.status);
     }
 
-    // receive all entries
-    function onAllEntries(data: entryData[]) {
-      setEntries(data);
-    }
-
     // receive all queries
     function onAllQueries(data: queryData[]) {
       setQueries(data.slice(-10));
@@ -158,16 +140,6 @@ function App() {
       );
     }
 
-    // receive app data
-    function onAppData(data: appData) {
-      setAppData(data);
-    }
-
-    // add to entry list
-    function onUpdateEntries(data: entryData) {
-      setEntries((prev) => [...prev, data]);
-    }
-
     // add to query list
     function onUpdateQueries(data: queryData) {
       setQueries((prev) => [...prev, data].slice(-10));
@@ -198,12 +170,9 @@ function App() {
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("status", onStatusChange);
-    socket.on("all_entries", onAllEntries);
     socket.on("all_queries", onAllQueries);
     socket.on("query_response", onQueryResponse);
     socket.on("all_entities", onAllEntities);
-    socket.on("app_data", onAppData);
-    socket.on("update_entries", onUpdateEntries);
     socket.on("update_queries", onUpdateQueries);
     socket.on("update_entities", onUpdateEntities);
     socket.on("overview_response", onOverviewResponse);
@@ -213,12 +182,9 @@ function App() {
       socket.off("disconnect", onDisconnect);
       socket.off("overview_response", onOverviewResponse);
       socket.off("status", onStatusChange);
-      socket.off("all_entries", onAllEntries);
       socket.off("all_queries", onAllQueries);
       socket.off("query_response", onQueryResponse);
       socket.off("all_entities", onAllEntities);
-      socket.off("app_data", onAppData);
-      socket.off("update_entries", onUpdateEntries);
       socket.off("update_queries", onUpdateQueries);
       socket.off("update_entities", onUpdateEntities);
       socket.offAny();
@@ -231,6 +197,12 @@ function App() {
       socket.emit("generate_overview");
     }
   }, [connected]);
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "instant", block: "end" });
+    }
+  }, [queries]);
 
   return (
     <>
@@ -259,8 +231,16 @@ function App() {
         <div style={{ display: "flex", flexDirection: "column", gap: "4rem" }}>
           <div className="section">
             <h2>Today is {date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h2>
-            <div style={{ padding: "1rem", backgroundColor: "var(--bg-d1)", borderRadius: "1rem" , minHeight:"4rem"}}>
-              <p style={{ whiteSpace: "pre-wrap" }}>{overviewLoading ? "Loading..." : overviewStr}</p>
+            <div style={{ padding: "1rem", backgroundColor: "var(--bg-d1)", borderRadius: "1rem", minHeight: "4rem" }}>
+              <p style={{ whiteSpace: "pre-wrap" }}>
+                {overviewLoading
+                  ? "Loading..."
+                  : !connected
+                  ? "Not connected"
+                  : overviewStr
+                  ? renderMarkdownBold(overviewStr)
+                  : "No overview available"}
+              </p>
             </div>
             <button
               className="small"
@@ -275,17 +255,21 @@ function App() {
 
           <div className="section">
             <h2>Tasks</h2>
-            {entities && (
-              <div
-                className="col"
-                style={{
-                  padding: "1rem",
-                  minHeight:"4rem",
-                  borderRadius: "1rem",
-                  backgroundColor: "var(--bg-d1)",
-                }}
-              >
-                {getSortedEntities(entities.todo).map((item, index) => (
+            <div
+              className="col"
+              style={{
+                padding: "1rem",
+                minHeight: "4rem",
+                borderRadius: "1rem",
+                backgroundColor: "var(--bg-d1)",
+              }}
+            >
+              {!connected ? (
+                <p>Not connected</p>
+              ) : getSortedEntities(entities.todo).length === 0 ? (
+                <p>No tasks</p>
+              ) : (
+                getSortedEntities(entities.todo).map((item, index) => (
                   <div key={index} className="item">
                     <div>
                       <input type="checkbox" />
@@ -298,23 +282,27 @@ function App() {
                       <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>Due {formatDateRelative(item.date)}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </div>
           <div className="section">
             <h2>Notes</h2>
-            {entities && (
-              <div
-                className="col"
-                style={{
-                  padding: "1rem",
-                  borderRadius: "1rem",
-                  minHeight:"4rem",
-                  backgroundColor: "var(--bg-d1)",
-                }}
-              >
-                {getSortedEntities(entities.note).map((item, index) => (
+            <div
+              className="col"
+              style={{
+                padding: "1rem",
+                borderRadius: "1rem",
+                minHeight: "4rem",
+                backgroundColor: "var(--bg-d1)",
+              }}
+            >
+              {!connected ? (
+                <p>Not connected</p>
+              ) : getSortedEntities(entities.note).length === 0 ? (
+                <p>No notes</p>
+              ) : (
+                getSortedEntities(entities.note).map((item, index) => (
                   <div key={index} className="item">
                     <div className="content">
                       <p style={{ fontSize: "0.875rem", color: "var(--text-light" }}>{formatDate(item.created_at)}</p>
@@ -322,24 +310,29 @@ function App() {
                       <p>{item.content}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
 
         <div>
           <div className="section">
             <h2>Chat</h2>
-            <div style={{ overflow: "auto", maxHeight: "70vh", backgroundColor: "var(--bg-d1)", borderRadius: "1rem", padding: "1rem" }}>
-              {queries && (
+            <div style={{ overflow: "auto", maxHeight: "70vh", backgroundColor: "var(--bg-d1)", borderRadius: "1rem", padding: "1rem", minHeight: "4rem" }}>
+              {!connected ? (
+                <p>Not connected</p>
+              ) : queries.length === 0 ? (
+                <p>No chats</p>
+              ) : (
                 <div className="col" style={{ gap: "2rem", paddingBottom: "8rem", backgroundColor: "var(--bg-d1)" }}>
-                  {queries.slice().map((item, index) => (
+                  {queries.slice().reverse().map((item, index) => (
                     <div key={index} className="col" style={{ gap: "0.25rem" }}>
                       <p style={{ backgroundColor: "var(--accent)", padding: "0 0.5rem", borderRadius: "0.5rem", width: "fit-content" }}> {item.query} </p>
-                      <p style={{ whiteSpace: "pre-wrap" }}> {item.response} </p>
+                      <p style={{ whiteSpace: "pre-wrap" }}>{renderMarkdownBold(item.response || "")}</p>
                     </div>
                   ))}
+                  <div ref={chatEndRef} />
                 </div>
               )}
             </div>

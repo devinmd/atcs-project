@@ -17,8 +17,10 @@ whisperModel = WhisperModel(MODEL_SIZE, compute_type=COMPUTE_TYPE)
 
 # initialize the LLM
 llm = Llama(
-    model_path="./models/llama3.2/Llama-3.2-8B-Instruct.IQ4_XS.gguf",  # takes ~10 seconds
+    # model_path="./models/llama3.2/Llama-3.2-8B-Instruct.IQ4_XS.gguf", 
+    model_path="./models/gemma/gemma-4-E4B-it-Q4_K_M.gguf",
     n_gpu_layers=-1,
+    seed=1,
     n_ctx=1024,
     verbose=False
 )

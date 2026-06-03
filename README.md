@@ -1,7 +1,23 @@
 # AT CS Project
 
-App that transcribes the user's microphone input and then summarizes the content in a web interface.
-The goal is to format unstructured user input of notes or tasks into structured data that can be displayed in a useful way. Automatic overviews are generated and the app serves as an infinite repository of the users memory.
+A local, privacy-first assistant that can listen, transcribe, and accept typed inputs to convert into structured memory (notes & tasks). The app embeds and indexes extracted entities so you can query your brain and generate automatic overviews.
+
+## Features
+- Real-time transcription and extraction
+- Automatic data structuring: Local LLM converts transcriptions and text into structured tasks and notes
+- Semantic search & querying: Sentence-transformer embeddings find relevant memories
+- Overview generation: LLM produces daily overviews
+- Web UI: Frontend Web UI allows for data entry and viewing
+
+## Usage
+- Use the microphone button to speak or type text into the main entry box
+- The backend converts these into structured tasks or notes and embeds them
+- Use the chat to query your memories and data, relevant entities are sent to the LLM to generate 
+- Daily overview is generated from relevant entities
+
+## Architecture
+- Backend: Python server handling audio, transcription, embeddings, LLM calls, and SQLite DB
+- Frontend: Vite + React connected to backend using socket.io
 
 ## Installation instructions
 
@@ -88,4 +104,5 @@ npm i
 - [ ] rework frontend user interface
 - [ ] add ability to change status of todos
 - [ ] update frontend when deleting entities
+- [x] switch to using a Gemma 4 model instead of Llama
 - [ ] allow parallel processing to prevent crashing when multiple overviews are requested or multiple entries are trying to be processed at once

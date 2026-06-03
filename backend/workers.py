@@ -235,7 +235,9 @@ def process_entry(content):
             ],
             temperature=0.2
         )
+    llm.reset()  # Clear the KV cache
     remove_status("Processing")
+    print(output['choices'][0]['message']['content'])
     return (output['choices'][0]['message']['content'])
 
 
@@ -257,6 +259,7 @@ def query_llm(content):
 
     print("QUERYING LLM...")
     print(content)
+    content_json = json.dumps(content)
 
     today = date.today()
     yesterday = today - timedelta(days=1)
@@ -271,10 +274,14 @@ def query_llm(content):
         output = llm.create_chat_completion(
             messages=[
                 {"role": "system", "content": QUERY_PROMPT},
-                {"role": "user", "content": f"Yesterday: {yesterday_str}, Today: {today_str}, Tomorrow: {tomorrow_str}, Query: {content}"}
+                {
+                    "role": "user", "content": f""" Yesterday's date: {yesterday_str} Today's date: {today_str} Tomorrow's date: {tomorrow_str} Tasks: {content_json} """
+                }
             ],
+            max_tokens=128,
             temperature=0.2
         )
+    llm.reset()  # Clear the KV cache
     return (output['choices'][0]['message']['content'])
 
 

@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 // Convert the date string from the database (UTC) and convert it to a Date object in local time and then format into a string
 export function formatDate(dateString: string) {
   console.log(dateString);
@@ -59,4 +61,11 @@ export function formatDateRelative(dateString: string) {
   };
 
   return new Intl.DateTimeFormat("en-US", options).format(date);
+}
+
+export function renderMarkdownBold(text: string): ReactNode {
+  return text.split(/(\*\*(?:[\s\S]*?)\*\*)/g).map((segment, index) => {
+    const match = segment.match(/^\*\*([\s\S]*?)\*\*$/);
+    return match ? <strong key={index}>{match[1]}</strong> : segment;
+  });
 }
