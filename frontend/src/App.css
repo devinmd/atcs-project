@@ -44,6 +44,12 @@ input[type="text"]:hover,
 input[type="text"]:focus {
   outline: 2px solid var(--accent-d);
 }
+
+input[type="text"]:disabled:hover,
+input[type="text"]:disabled:focus {
+  outline: 1px solid transparent;
+}
+
 .main {
   padding: 2rem;
   overflow: hidden;
@@ -79,6 +85,10 @@ button {
   white-space: nowrap;
 }
 
+button:disabled {
+  cursor: default;
+}
+
 button.small {
   padding: 0;
   background-color: transparent;
@@ -110,6 +120,22 @@ button.clear:hover {
 
 button:hover {
   background-color: var(--bg-d2);
+}
+
+button.accent:disabled:hover,
+button.accent:disabled:focus {
+  background-color: var(--accent);
+}
+
+button.small:disabled:hover,
+button.small:disabled:focus {
+  background-color: transparent;
+  text-decoration: none;
+}
+
+button:disabled:hover,
+button:disabled:focus {
+  background-color: var(--bg-d1);
 }
 
 .col {

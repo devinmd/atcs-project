@@ -123,6 +123,7 @@ function App() {
   }
 
   function sendEntry(text: string) {
+    if (!connected) return;
     const trimmed = text.trim();
     if (!trimmed) return;
     setEntryInputValue("");
@@ -130,6 +131,7 @@ function App() {
   }
 
   function sendQuery(text: string) {
+    if (!connected) return;
     const trimmed = text.trim();
     if (!trimmed) return;
     setQueryInputValue("");
@@ -279,9 +281,9 @@ function App() {
         <img src="./wordmark.svg" alt="" />
         <div className="center">
           <input
-          style={{
-            height:"2rem"
-          }}
+            style={{
+              height: "2rem",
+            }}
             value={entryInputValue}
             onChange={(e) => setEntryInputValue(e.target.value)}
             onKeyDown={(e) => {
@@ -293,14 +295,16 @@ function App() {
             className="message-input"
             type="text"
             placeholder="Add a task, note, or idea..."
+            disabled={!connected}
           />
           <button
             style={{ backgroundImage: `url(./${micOn ? "mic" : "mic-off"}.svg)`, backgroundColor: `${micOn ? "var(--orange)" : ""}` }}
             onClick={() => {
               toggleMic();
             }}
+            disabled={!connected}
           ></button>
-          <button className="accent" onClick={() => sendEntry(entryInputValue)} style={{ backgroundImage: "url(./arrow-up.svg)" }}></button>
+          <button className="accent" onClick={() => sendEntry(entryInputValue)} style={{ backgroundImage: "url(./arrow-up.svg)" }} disabled={!connected}></button>
         </div>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <span className={connected ? "online" : "offline"}>• {connected ? "Connected" : "Not connected"}</span>
@@ -326,6 +330,7 @@ function App() {
                 setOverviewLoading(true);
                 socket.emit("generate_overview");
               }}
+              disabled={!connected}
             >
               Generate New Overview
             </button>
@@ -337,7 +342,7 @@ function App() {
               className="col"
               style={{
                 padding: "1rem",
-                gap:"2rem",
+                gap: "2rem",
                 minHeight: "4rem",
                 borderRadius: "1rem",
                 backgroundColor: "var(--bg-d1)",
@@ -346,7 +351,7 @@ function App() {
               {!connected ? (
                 <p>Not connected</p>
               ) : taskGroups.length === 0 ? (
-                <p>No tasks</p>
+                <p>No tasks yet</p>
               ) : (
                 taskGroups.map((group) => (
                   <div key={group.label} className="col">
@@ -384,7 +389,7 @@ function App() {
               {!connected ? (
                 <p>Not connected</p>
               ) : getSortedEntities(entities.note).length === 0 ? (
-                <p>No notes</p>
+                <p>No notes yet</p>
               ) : (
                 getSortedEntities(entities.note).map((item, index) => (
                   <div key={index} className="item">
@@ -436,8 +441,9 @@ function App() {
                 className="message-input"
                 type="text"
                 placeholder="What is due this week?"
+                disabled={!connected}
               />
-              <button style={{ backgroundImage: "url(./arrow-up.svg)" }} className="accent" onClick={() => sendQuery(queryInputValue)}></button>
+              <button style={{ backgroundImage: "url(./arrow-up.svg)" }} className="accent" onClick={() => sendQuery(queryInputValue)} disabled={!connected}></button>
             </div>
           </div>
         </div>

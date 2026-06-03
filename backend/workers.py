@@ -66,7 +66,7 @@ def llm_worker():
         msg = llm_queue.get()
 
         print('SUMMARIZING')
-        add_status("Processing")
+        add_status("Processing Entry")
 
         summaryString = process_entry(msg).strip()
         print(summaryString)
@@ -81,7 +81,7 @@ def llm_worker():
             content=summaryJSON.get("content", summaryString),
             priority_rank=summaryJSON.get("priority_rank", 0),
         )
-        remove_status("Processing")
+        remove_status("Processing Entry")
 
 
 # combine all of the text, text queue -> llm queue
@@ -216,7 +216,7 @@ def process_entry(content):
 
     print("PROCESSING ENTRY...")
     print(content)
-    add_status("Processing")
+    add_status("Processing Entry")
 
     today = date.today()
     yesterday = today - timedelta(days=1)
@@ -237,7 +237,7 @@ def process_entry(content):
             temperature=0.2
         )
     llm.reset()  # Clear the KV cache
-    remove_status("Processing")
+    remove_status("Processing Entry")
     print(output['choices'][0]['message']['content'])
     return (output['choices'][0]['message']['content'])
 
